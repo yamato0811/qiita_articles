@@ -204,8 +204,11 @@ https://langchain-ai.github.io/langgraph/tutorials/introduction/#part-1-build-a-
 Workflowで構成した各Sub Agentを階層的に管理するため、SubGraphの機能を使用しました。SubGraphを使用することで、グラフ全体の管理性や拡張性を高めることが可能となります。
 
 #### Supervisorの定義
-`agent/supervisor.py`でSupervisorのグラフを構築しています。
-グラフの定義およびコンパイル処理は、`build_graph`関数で行っています。
+`agent/supervisor.py`でSupervisorのグラフを構築しています。まず、`__init__`関数で、Supervisorが利用するツールの設定を行います。グラフの定義およびコンパイル処理は、`build_graph`関数で行っています。
+
+:::note warn
+ツールとして、handoffによりサブエージェントに制御を譲渡するための関数（`handoff_to_copy_generator`や`handoff_to_image_generator`）を定義しています。これら解説については、後述の[セクション](#handoffcommand)で詳しく行います。
+:::
 
 すでにコンパイル済みのグラフ（`copy_generator`や`image_generator`）を直接ノードとして`add_node`することでサブグラフとして追加することができます。
 
