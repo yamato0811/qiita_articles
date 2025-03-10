@@ -206,11 +206,11 @@ Workflowで構成した各Sub Agentを階層的に管理するため、SubGraph�
 #### Supervisorの定義
 `agent/supervisor.py`でSupervisorのグラフを構築しています。まず、`__init__`関数で、Supervisorが利用するツールの設定を行います。グラフの定義およびコンパイル処理は、`build_graph`関数で行っています。
 
+すでにコンパイル済みのグラフ（`copy_generator`や`image_generator`）を直接ノードとして`add_node`することでサブグラフとして追加することができます。
+
 :::note warn
 ツールとして、handoffによりサブエージェントに制御を譲渡するための関数（`handoff_to_copy_generator`や`handoff_to_image_generator`）を定義しています。これら解説については、後述の[セクション](#handoffcommand)で詳しく行います。
 :::
-
-すでにコンパイル済みのグラフ（`copy_generator`や`image_generator`）を直接ノードとして`add_node`することでサブグラフとして追加することができます。
 
 ```python: agent/supervisor.py
 import json
