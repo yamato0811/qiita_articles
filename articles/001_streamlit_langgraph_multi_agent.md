@@ -14,7 +14,7 @@ https://speakerdeck.com/ren8k/langgraph-bedrock-supervisor-agent
 
 Streamlit×LangGraphを使ったMulti-Agentアプリケーションの実装事例はまだ少なく、試行錯誤の連続でした。本記事では、実装を通じて得られた技術的なポイントや実践的な工夫を共有します。これらの情報が、同様の開発に取り組まれる方々の一助となれば幸いです。
 
-作成したアプリケーションのリポジトリは、以下のリンクからご確認いただけます。
+解説用に実装した簡易アプリケーションのリポジトリは、以下のリンクからご確認いただけます。
 
 https://github.com/yamato0811/streamlit-langgraph-multi-agent.git
 
