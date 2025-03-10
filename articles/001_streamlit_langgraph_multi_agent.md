@@ -1,5 +1,11 @@
 # LangGraph×Bedrockによる複数のAgentic Workflowを利用したSupervisor型マルチエージェントの実装：広告素材作成アプリケーション
 
+:::note info
+本記事は[Bedrock Night オンライン 〜AWSで生成AIアプリ開発！ 最新ナレッジ共有〜](https://jawsug.connpass.com/event/345497/)で登壇した際の内容です。以下の登壇資料も合わせてご覧ください！
+:::
+
+https://speakerdeck.com/ren8k/langgraph-bedrock-supervisor-agent
+
 ## はじめに
 株式会社NTTデータ デジタルサクセスコンサルティング事業部の[@yamato0811](https://qiita.com/yamato0811), [@ren8k](https://qiita.com/ren8k)です。
 
@@ -12,16 +18,7 @@ Streamlit×LangGraphを使ったMulti-Agentアプリケーションの実装事�
 
 https://github.com/yamato0811/streamlit-langgraph-multi-agent.git
 
-
-:::note info
-本記事は[Bedrock Night オンライン 〜AWSで生成AIアプリ開発！ 最新ナレッジ共有〜](https://jawsug.connpass.com/event/345497/)で登壇した際の内容です。以下の登壇資料も合わせてご覧ください！
-:::
-
-https://speakerdeck.com/ren8k/langgraph-bedrock-supervisor-agent
-
-:::note info
 また、Streamlit × LangGraphで実装するHuman-in-the-loop Agentic Workflowについて解説した記事を、以前に執筆しました。まだご覧になっていない方は、そちらをあわせてお読みいただくとより理解が深まるかと思います！
-:::
 
 https://qiita.com/yamato0811/items/02688690a85a670b773f
 
