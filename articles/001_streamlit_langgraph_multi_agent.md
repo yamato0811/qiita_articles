@@ -17,7 +17,7 @@ https://github.com/yamato0811/streamlit-langgraph-multi-agent.git
 本記事は[Bedrock Night オンライン 〜AWSで生成AIアプリ開発！ 最新ナレッジ共有〜](https://jawsug.connpass.com/event/345497/)で登壇した際の内容です。以下の登壇資料も合わせてご覧ください！
 :::
 
-!!! リンク !!!
+https://speakerdeck.com/ren8k/langgraph-bedrock-supervisor-agent
 
 :::note info
 また、Streamlit × LangGraphで実装するHuman-in-the-loop Agentic Workflowについて解説した記事を、以前に執筆しました。まだご覧になっていない方は、そちらをあわせてお読みいただくとより理解が深まるかと思います！
