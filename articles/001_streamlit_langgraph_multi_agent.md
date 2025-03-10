@@ -407,7 +407,7 @@ def supervisor(self, state: AgentState) -> Command[
     state["messages"].append(response)
 ```
 
-その後、SubAgentの処理委譲が必要かどうかをtool useを使用して判定します。（toolの定義内容については後述します。）
+その後、SubAgentの処理委譲が必要かどうかを`tool_calls`を使用して判定します。（toolの定義内容については後述します。）
 
 ```python: agent/supervisor.py
     if len(response.tool_calls) > 0:
@@ -468,12 +468,16 @@ https://langchain-ai.github.io/langgraph/how-tos/command/
 ```
 
 #### toolの定義
-Supervisorで利用するtoolは以下のように定義しています。
-
-このとき、LLMでツール呼び出しを行った際には会話履歴にtool messageを含める必要があるため、messagesに`tool_msg`を追加している点には注意してください
+Supervisorで利用するtoolは以下のように定義しています。このとき、LLMでツール呼び出しを行った際には会話履歴にtool messageを含める必要があるため、messagesに`tool_msg`を追加している点には注意してください。
 
 また、tool関数に記載する説明はAnthoropicの[Best practices for tool definitions](https://docs.anthropic.com/en/docs/build-with-claude/tool-use/overview#best-practices-for-tool-definitions)に従い、できるだけ詳細に記載することが重要です。（本来は今よりも更に詳細に記載することが望ましいです）
 
+以上をまとめると、以下に示す`@tool`でデコレートしたhandoffの関数（ツール）をSupervisorが呼び出すことで、以下の情報を取得しています。
+
+- 次に実行すべきサブエージェント（Workflow）のノード名（関数内で定義）
+- Workflowの実行に必要なStateの情報（tool useによって生成されたツールの引数）
+
+その後、SupervisorのCommandオブジェクト内で、上記の情報をそれぞれ引数`goto`と`update`に指定してreturnで返しています。
 
 ```python: agent/tools.py
 @tool
