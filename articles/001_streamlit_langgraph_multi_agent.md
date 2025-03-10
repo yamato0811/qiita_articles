@@ -96,13 +96,11 @@ LLMにはAmazon BedrockのClaude 3.7 Sonnet、画像生成にはAmazon Bedrock�
 https://github.com/yamato0811/streamlit-langgraph-multi-agent.git
 
 ### WorkflowをMulti-Agentで利用するアイデア
-WorkflowとMulti-Agentの両方のメリットを享受するため、Supervisor型のMulti-Agentの各Agent（Sub Agent）をAgentic Workflowで定義するアイデアを採用しました。これにより、
-ユーザーの要望を基に実行すべきWorkflowを柔軟に選択しつつ、決定的な実行順序で正確なタスク実行が可能となります。
-
+WorkflowとMulti-Agentの両方のメリットを享受するため、Multi-Agentの各Agent（Sub Agent）としてAgentic Workflowを利用しました。これにより、ユーザーの要望を基に実行すべきWorkflowを柔軟に選択しつつ、決定的な実行順序で正確なタスク実行が可能となります。
 
 <img src="https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/2840684/89f30d72-1878-4524-89ea-638d333646ae.png" width="600">
 
-上記のアイデアを実現するために，LangGraphの以下の機能を利用しています．
+上記のアイデアを実現するために、LangGraphの以下の機能を利用しています。
 
 - SubGraph: グラフ（Agentic Workflow, Agent）をノードとして利用する機能
 - handoff(Command): Agentの制御を他のAgentに譲渡する機能
