@@ -102,6 +102,15 @@ WorkflowとMulti-Agentの両方のメリットを享受するため、Supervisor
 
 <img src="https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/2840684/89f30d72-1878-4524-89ea-638d333646ae.png" width="600">
 
+上記のアイデアを実現するために，LangGraphの以下の機能を利用しています．
+
+- SubGraph: グラフ（Agentic Workflow, Agent）をノードとして利用する機能
+- handoff(Command): Agentの制御を他のAgentに譲渡する機能
+
+:::note info
+特に、handoff(Command)を`@tool` デコレータを使用して実装することで、SubAgentを（間接的に）ツールとして定義しています。これにより、SupervisorからTool UseでSubAgentを呼び出せるように工夫しています。
+:::
+
 ### LangGraphのグラフ構造
 以下に、今回作成したアプリケーションのグラフ構造を示します。
 
