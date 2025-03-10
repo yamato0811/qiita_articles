@@ -721,7 +721,7 @@ https://www.nttdata.com/jp/ja/lineup/tdf/
 
 <details><summary> TDFⓇ-AM（Trusted Data Foundation - Analytics Managed Service）について</summary><div>
 
-～データ活用基盤の段階的な拡張支援（Quick Start) と保守運用のマネジメント（Analytics Managed）をご提供することでお客様のDXを成功に導く、データ活用プラットフォームサービス～
+～データ活用基盤の段階的な拡張支援（Quick Start）と保守運用のマネジメント（Analytics Managed）をご提供することでお客様のDXを成功に導く、データ活用プラットフォームサービス～
 https://www.nttdata.com/jp/ja/lineup/tdf_am/
 TDFⓇ-AMは、データ活用をQuickに始めることができ、データ活用の成熟度に応じて段階的に環境を拡張します。プラットフォームの保守運用はNTTデータが一括で実施し、お客様は成果創出に専念することが可能です。また、日々最新のテクノロジーをキャッチアップし、常に活用しやすい環境を提供します。なお、ご要望に応じて上流のコンサルティングフェーズからAI/BIなどのデータ活用支援に至るまで、End to Endで課題解決に向けて伴走することも可能です。
 
