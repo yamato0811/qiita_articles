@@ -1,4 +1,4 @@
-# Streamlit×LangGraphによる複数のAgentic Workflowを利用したSupervisor型マルチエージェントの実装：広告素材作成アプリケーション
+# LangGraph×Bedrockによる複数のAgentic Workflowを利用したSupervisor型マルチエージェントの実装：広告素材作成アプリケーション
 
 ## はじめに
 株式会社NTTデータ デジタルサクセスコンサルティング事業部の[@yamato0811](https://qiita.com/yamato0811), [@ren8k](https://qiita.com/ren8k)です。
