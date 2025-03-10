@@ -250,8 +250,8 @@ class Supervisor:
 ```
 
 :::note info
-サブグラフを追加する際は、親グラフとサブグラフ間の状態（state）のスキーマを一致させる必要があります。
-もし親グラフとまったく異なるスキーマ（共有キーなし）を定義したい場合は、サブグラフを呼び出すノード関数を定義する必要があります。
+サブグラフを追加する際は、サブグラフの状態（state）のスキーマにおけるプロパティを1つ以上，共有キーとして親グラフのstateに含める必要があります。これは、共有キーを介して親グラフとサブグラフの状態を連携させるためです。
+もし親グラフと全く異なるスキーマ（共有キーなし）を定義したい場合は、サブグラフを呼び出すノード関数を定義する必要があります。
 
 https://langchain-ai.github.io/langgraph/how-tos/subgraph/
 :::
@@ -362,10 +362,10 @@ CopyGeneratorの各ノードの処理関数は以下のように記載してい�
 
 ### handoff(Command)
 
-handoffは、あるAgentが別のAgentに制御を渡す考え方のことで、LangGraphのCommandという機能を利用して実現する事ができます。
+handoffは、あるAgentが別のAgentに制御を渡す考え方のことで、LangGraphのCommandという機能を利用して実現する事ができます。
 
 #### Supervisorの処理関数の実装
-Supervisorの`supervisor()`関数では、tool callingとhandoffを使用して次のエージェントに処理を委譲の仕組みを実装しています。
+Supervisorの`supervisor()`関数では、tool callingとhandoffを使用して、Supervisor Agentが他のサブエージェントに処理を委譲する（サブエージェントをツールとして呼び出す）仕組みを実装しています。
 
 まず、Supervisorは、過去の会話履歴とユーザーからの指示に基づき、次にどのサブエージェント（ツール）を利用すべきかを判断します。その際、応答（`response`）は会話のコンテキストとして`state["messages"]`に追加しています。
 
