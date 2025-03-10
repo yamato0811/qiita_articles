@@ -444,7 +444,7 @@ def supervisor(self, state: AgentState) -> Command[
 ```
 
 :::note info
-Commandは、ノード内でAgentのStateの更新と、次に実行するノードの指定を同時に行う、2024年12月に発表された機能です。`goto`に次に実行するノード名を、`update`に更新するStateを記載します。 
+Commandは、ノード内でAgentのStateの更新と、次に実行するノードの指定を同時に行う、2024年12月に発表された機能です。`goto`には次に実行するノード名を、`update`には更新するStateを記載します。 
 
 https://langchain-ai.github.io/langgraph/how-tos/command/
 :::
@@ -543,7 +543,7 @@ def handoff_to_image_generator(
 ```
 
 :::note info
-ツール引数以外の値を関数内で利用したい場合は、`InjectedToolCallId`のような`InjectedArg`の注釈をつけます。この注釈を付けることで、そのパラメータがLLMに認識されなくなります。
+ツール引数以外の値を関数に渡したい場合は、`InjectedToolCallId`のような`InjectedArg`の注釈を付与します。`InjectedArg`の注釈が付与されたパラメータは、tool use時にLLMに認識されなくなり、引数として生成されなくなります。
 
 https://langchain-ai.github.io/langgraph/how-tos/pass-run-time-values-to-tools/
 :::
