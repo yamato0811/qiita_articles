@@ -477,7 +477,7 @@ Supervisorで利用するtoolは以下のように定義しています。この
 - 次に実行すべきサブエージェント（Workflow）のノード名（関数内で定義）
 - Workflowの実行に必要なStateの情報（tool useによって生成されたツールの引数）
 
-その後、SupervisorのCommandオブジェクト内で、上記の情報をそれぞれ引数`goto`と`update`に指定してreturnで返しています。
+その後、SupervisorのCommandオブジェクト内で、上記の情報をそれぞれ引数`goto`と`update`に指定してreturnで返しています。この結果，Supervisorはtool useで（間接的に）SubAgentを呼び出すことができ，同時にtool useでWorkflowの実行に必要なStateの情報も生成することが可能です．
 
 ```python: agent/tools.py
 @tool
