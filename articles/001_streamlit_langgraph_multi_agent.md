@@ -202,7 +202,7 @@ Workflowで構成した各Sub Agentを階層的に管理するため、SubGraph�
 #### Supervisorの定義
 `agent/supervisor.py`でSupervisorのグラフを構築しています。まず、`__init__`関数で、Supervisorが利用するツールの設定を行います。グラフの定義およびコンパイル処理は、`build_graph`関数で行っています。
 
-すでにコンパイル済みのグラフ（`copy_generator`や`image_generator`）を直接ノードとして`add_node`することでサブグラフとして追加することができます。
+すでにコンパイル済みのグラフ（`copy_generator`や`image_generator`）を直接ノードとして`add_node`することで、Agentic Workflowをサブグラフとして利用することができます。
 
 :::note warn
 ツールとして、handoffによりサブエージェントに制御を譲渡するための関数（`handoff_to_copy_generator`や`handoff_to_image_generator`）を定義しています。これら解説については、後述の[セクション](#handoffcommand)で詳しく行います。
@@ -257,9 +257,19 @@ https://langchain-ai.github.io/langgraph/how-tos/subgraph/
 
 #### Sub Agentの定義
 Sub Agentのグラフの代表例として、CopyGeneratorのSubGraphについて説明します。
-CopyGeneratorのサブグラフでは、キャッチコピーの生成と改善という機能を持つ2つのノードを定義しています。
+CopyGeneratorは、キャッチコピーの生成を行うノード（`generate_copy`）とコピーの改善を行うノード（`refine_copy`）を定義したAgentic Workflowです。
 
-このSubGraphは単純な直線的な構造で、generate_copyからrefine_copyへと順番に処理を進め、最後にSupervisorに結果を返しています。
+このSubGraphは単純な直線的な構造で、generate_copyからrefine_copyへと順番に処理を進めます。
+
+:::note info
+
+最終的にSupervisorに制御が移るように、以下のようにSupervisorのグラフ内で定義しています。
+
+```python
+graph_builder.add_edge("copy_generator_subgraph", "supervisor")
+```
+
+:::
 
 ```python: agent/copy_generator.py
 from langgraph.graph import StateGraph
@@ -287,7 +297,7 @@ class CopyGenerator:
 
 CopyGeneratorの各ノードの処理関数は以下のように記載しています。
 
-`generate_copy()`では、Supervisorから受け取ったコピーのテーマ`state['theme_copy']`をもとにLLMを実行し、キャッチコピーを生成します。生成結果は`draft_copy`として返します。`refine_copy()`では、`generate_copy()`で生成した`draft_copy`を受け取り、LLM実行により改善したコピーを返します。
+`generate_copy()`では、Supervisorから受け取ったコピーのテーマ`state['theme_copy']`を基にLLMを実行し、キャッチコピーを生成します。生成結果は`draft_copy`として返します。`refine_copy()`では、`generate_copy()`で生成した`draft_copy`を受け取り、LLM実行により改善したコピーを返します。
 
 また、`display_message_dict`には、Streamlitに表示するためのメッセージを格納しています。
 
@@ -417,7 +427,7 @@ def supervisor(self, state: AgentState) -> Command[
             invoke_result = json.loads(tool_response.content)
 ```
 
-ツール呼び出しの結果から得られた`goto`と`update`を使い、Commandオブジェクトを生成して返します。これにより、処理は次のサブエージェント（`copy_generator_subgraph`や`image_generator_subgraph`）へ移譲されます。
+ツール呼び出しの結果から得られた`goto`と`update`を使い、Commandオブジェクトを返します。これにより、処理は次のサブエージェント（`goto`に格納されている`copy_generator_subgraph`や`image_generator_subgraph`）へ移譲されます。
 
 ```python: agent/supervisor.py
         # for bedrock
