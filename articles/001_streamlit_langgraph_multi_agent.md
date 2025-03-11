@@ -37,14 +37,14 @@ Agentic Workflowは、事前に明確に定義された実行順序で、複数�
 
 <img src="https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/2840684/bcee1a24-9923-4e04-8455-5cd54108d15e.png" width="400">
 
-各ステップはあらかじめ決められているため、プロセスが制御しやすく、結果も安定しやすいのが特長です。
+各タスクの実行順序は予め決められているため、プロセスが制御しやすく、結果も安定しやすいのが特長です。
 
 ### Agent
 Agent（ReAct）は、状況に応じてLLMがどのツールを使うべきかを自律的に決定し、ツールの実行結果をもとに次のアクションを柔軟に選択する仕組みです。この仕組みでは、LLMが考え、行動し、その結果を観察して再び考える（Reasoning, Acting, Observation）というサイクルを繰り返します。
 
 <img src="https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/2840684/58d8b38c-a600-43aa-97a7-b0c8815b3e4e.png" width="400">
 
-実行タスクを動的に決定できるため、ユーザーのニーズに対し柔軟かつ動的に対応可能です。
+実行タスクやその実行順序を動的に決定できるため、ユーザーのニーズに対し柔軟に対応可能です。
 
 ### Agentic WorkflowとAgentの比較
 
