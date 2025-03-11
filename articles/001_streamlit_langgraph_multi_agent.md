@@ -142,11 +142,11 @@ graph TD;
 
 
 ### アプリの機能
-Supervisorは以下2つの機能を持つエージェントを管理しており、ユーザーからの要望に応じて各エージェントに指示を出します。
+Supervisorは以下2つの機能を持つSubAgentを管理しており、ユーザーからの要望に応じて各SubAgentに指示を出します。
 
-- **コピー文生成エージェント**: 与えられたキーワードをもとに効果的なコピー文を作成
+- **コピー文生成エージェント**: 与えられたキーワードをもとに効果的なコピー文を作成する
   - generate_copyノード：Supervisorが指示したキーワードに基づいて初期コピー文を生成
-  - refine_copyノード：生成した初期コピー文をさらに改善する
+  - refine_copyノード：生成した初期コピー文をさらに改善
 - **画像生成エージェント**: 画像の主題に基づいて、画像を生成する
   - generate_promptノード：Supervisorが指示した画像の主題に基づいて画像生成用のプロンプトを作成
   - generate_imageノード：作成したプロンプトを元に画像を生成
@@ -155,7 +155,7 @@ Supervisorは以下2つの機能を持つエージェントを管理しており
 ## LangGraphでMulti-Agentの実装
 本章では、LangGraphを使用したAgentグラフの実装方法について、具体的なコード例を交えて説明します。特に、SubAgentとしてWorkflowを定義するために利用した、**SubGraph**と、**handoff(Command)** という機能を中心に解説します。
 
-※ プログラムの一部のみ抜粋していますので、適宜githubコードを参照ください。
+※ プログラムの一部のみ抜粋していますので、適宜[GitHubのコード](https://github.com/yamato0811/streamlit-langgraph-multi-agent)を参照ください。
 
 ### Stateの定義
 グラフのノード間を遷移するState情報は`agent/state.py`に以下のように定義しています。  
