@@ -96,11 +96,18 @@ LLMにはAmazon BedrockのClaude 3.7 Sonnet、画像生成にはAmazon Bedrock�
 https://github.com/yamato0811/streamlit-langgraph-multi-agent.git
 
 ### WorkflowをMulti-Agentで利用するアイデア
-WorkflowとMulti-Agentの両方のメリットを享受するため、Supervisor型のMulti-Agentの各Agent（Sub Agent）をAgentic Workflowで定義するアイデアを採用しました。これにより、
-ユーザーの要望を基に実行すべきWorkflowを柔軟に選択しつつ、決定的な実行順序で正確なタスク実行が可能となります。
-
+WorkflowとMulti-Agentの両方のメリットを享受するため、Multi-Agentの各Agent（Sub Agent）としてAgentic Workflowを利用しました。これにより、ユーザーの要望を基に実行すべきWorkflowを柔軟に選択しつつ、決定的な実行順序で正確なタスク実行が可能となります。
 
 <img src="https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/2840684/89f30d72-1878-4524-89ea-638d333646ae.png" width="600">
+
+上記のアイデアを実現するために、LangGraphの以下の機能を利用しています。
+
+- SubGraph: グラフ（Agentic Workflow, Agent）をノードとして利用する機能
+- handoff(Command): Agentの制御を他のAgentに譲渡する機能
+
+:::note info
+特に、handoff(Command)を`@tool` デコレータを使用して実装することで、SubAgentを（間接的に）ツールとして定義しています。これにより、SupervisorからTool UseでSubAgentを呼び出せるように工夫しています。
+:::
 
 ### LangGraphのグラフ構造
 以下に、今回作成したアプリケーションのグラフ構造を示します。
@@ -195,10 +202,13 @@ https://langchain-ai.github.io/langgraph/tutorials/introduction/#part-1-build-a-
 Workflowで構成した各Sub Agentを階層的に管理するため、SubGraphの機能を使用しました。SubGraphを使用することで、グラフ全体の管理性や拡張性を高めることが可能となります。
 
 #### Supervisorの定義
-`agent/supervisor.py`でSupervisorのグラフを構築しています。
-グラフの定義およびコンパイル処理は、`build_graph`関数で行っています。
+`agent/supervisor.py`でSupervisorのグラフを構築しています。まず、`__init__`関数で、Supervisorが利用するツールの設定を行います。グラフの定義およびコンパイル処理は、`build_graph`関数で行っています。
 
 すでにコンパイル済みのグラフ（`copy_generator`や`image_generator`）を直接ノードとして`add_node`することでサブグラフとして追加することができます。
+
+:::note warn
+ツールとして、handoffによりサブエージェントに制御を譲渡するための関数（`handoff_to_copy_generator`や`handoff_to_image_generator`）を定義しています。これら解説については、後述の[セクション](#handoffcommand)で詳しく行います。
+:::
 
 ```python: agent/supervisor.py
 import json
@@ -241,8 +251,8 @@ class Supervisor:
 ```
 
 :::note info
-サブグラフを追加する際は、親グラフとサブグラフ間の状態（state）のスキーマを一致させる必要があります。
-もし親グラフとまったく異なるスキーマ（共有キーなし）を定義したい場合は、サブグラフを呼び出すノード関数を定義する必要があります。
+サブグラフを追加する際は、サブグラフの状態（state）のスキーマにおけるプロパティを1つ以上，共有キーとして親グラフのstateに含める必要があります。これは、共有キーを介して親グラフとサブグラフの状態を連携させるためです。
+もし親グラフと全く異なるスキーマ（共有キーなし）を定義したい場合は、サブグラフを呼び出すノード関数を定義する必要があります。
 
 https://langchain-ai.github.io/langgraph/how-tos/subgraph/
 :::
@@ -353,10 +363,10 @@ CopyGeneratorの各ノードの処理関数は以下のように記載してい�
 
 ### handoff(Command)
 
-handoffは、あるAgentが別のAgentに制御を渡す考え方のことで、LangGraphのCommandという機能を利用して実現する事ができます。
+handoffは、あるAgentが別のAgentに制御を渡す考え方のことで、LangGraphのCommandという機能を利用して実現する事ができます。
 
 #### Supervisorの処理関数の実装
-Supervisorの`supervisor()`関数では、tool callingとhandoffを使用して次のエージェントに処理を委譲の仕組みを実装しています。
+Supervisorの`supervisor()`関数では、tool useとhandoffを使用して、Supervisor Agentが他のサブエージェントに処理を委譲する（サブエージェントをツールとして呼び出す）仕組みを実装しています。
 
 まず、Supervisorは、過去の会話履歴とユーザーからの指示に基づき、次にどのサブエージェント（ツール）を利用すべきかを判断します。その際、応答（`response`）は会話のコンテキストとして`state["messages"]`に追加しています。
 
@@ -397,7 +407,7 @@ def supervisor(self, state: AgentState) -> Command[
     state["messages"].append(response)
 ```
 
-その後、SubAgentの処理委譲が必要かどうかをtool callingを使用して判定します。（toolの定義内容については後述します。）
+その後、SubAgentの処理委譲が必要かどうかを`tool_calls`を使用して判定します。（toolの定義内容については後述します。）
 
 ```python: agent/supervisor.py
     if len(response.tool_calls) > 0:
@@ -432,7 +442,7 @@ def supervisor(self, state: AgentState) -> Command[
 ```
 
 :::note info
-Commandは、ノード内でAgentのStateの更新と、次に実行するノードの指定を同時に行う、2024年12月に発表された機能です。`goto`に次に実行するノード名を、`update`に更新するStateを記載します。 
+Commandは、ノード内でAgentのStateの更新と、次に実行するノードの指定を同時に行う、2024年12月に発表された機能です。`goto`には次に実行するノード名を、`update`には更新するStateを記載します。 
 
 https://langchain-ai.github.io/langgraph/how-tos/command/
 :::
@@ -458,12 +468,16 @@ https://langchain-ai.github.io/langgraph/how-tos/command/
 ```
 
 #### toolの定義
-Supervisorで利用するtoolは以下のように定義しています。
+Supervisorで利用するtoolは以下のように定義しています。このとき、LLMでツール呼び出しを行った際には会話履歴にtool messageを含める必要があるため、messagesに`tool_msg`を追加している点には注意してください。
 
-このとき、LLMでツール呼び出しを行った際には会話履歴にtool messageを含める必要があるため、messagesに`tool_msg`を追加している点には注意してください
+また、toolに記載する説明はAnthoropicの[Best practices for tool definitions](https://docs.anthropic.com/en/docs/build-with-claude/tool-use/overview#best-practices-for-tool-definitions)に従い、できるだけ詳細に記載することが重要です。（本来は今よりも更に詳細に記載することが望ましいです）
 
-また、tool関数に記載する説明はAnthoropicの[Best practices for tool definitions](https://docs.anthropic.com/en/docs/build-with-claude/tool-use/overview#best-practices-for-tool-definitions)に従い、できるだけ詳細に記載することが重要です。（本来は今よりも更に詳細に記載することが望ましいです）
+以上をまとめると、以下に示す`@tool`でデコレートしたhandoff用の関数（ツール）をSupervisorが呼び出すことで、以下の情報を取得しています。
 
+- 次に実行すべきサブエージェント（Workflow）のノード名（関数内で定義）
+- Workflowの実行に必要なStateの情報（tool useによって生成されたツールの引数）
+
+その後、SupervisorのCommandオブジェクト内で、上記の情報をそれぞれ引数`goto`と`update`に指定してreturnで返しています。この結果，Supervisorはtool useで（間接的に）SubAgentを呼び出し、同時にtool useでWorkflowの実行に必要なStateの情報も生成しています。
 
 ```python: agent/tools.py
 @tool
@@ -531,7 +545,7 @@ def handoff_to_image_generator(
 ```
 
 :::note info
-ツール引数以外の値を関数内で利用したい場合は、`InjectedToolCallId`のような`InjectedArg`の注釈をつけます。この注釈を付けることで、そのパラメータがLLMに認識されなくなります。
+ツール引数以外の値を関数に渡したい場合は、`InjectedToolCallId`のような`InjectedArg`の注釈を付与します。`InjectedArg`の注釈が付与されたパラメータは、tool use時にLLMに認識されなくなり、引数として生成されなくなります。
 
 https://langchain-ai.github.io/langgraph/how-tos/pass-run-time-values-to-tools/
 :::
@@ -707,7 +721,7 @@ https://www.nttdata.com/jp/ja/lineup/tdf/
 
 <details><summary> TDFⓇ-AM（Trusted Data Foundation - Analytics Managed Service）について</summary><div>
 
-～データ活用基盤の段階的な拡張支援（Quick Start) と保守運用のマネジメント（Analytics Managed）をご提供することでお客様のDXを成功に導く、データ活用プラットフォームサービス～
+～データ活用基盤の段階的な拡張支援（Quick Start）と保守運用のマネジメント（Analytics Managed）をご提供することでお客様のDXを成功に導く、データ活用プラットフォームサービス～
 https://www.nttdata.com/jp/ja/lineup/tdf_am/
 TDFⓇ-AMは、データ活用をQuickに始めることができ、データ活用の成熟度に応じて段階的に環境を拡張します。プラットフォームの保守運用はNTTデータが一括で実施し、お客様は成果創出に専念することが可能です。また、日々最新のテクノロジーをキャッチアップし、常に活用しやすい環境を提供します。なお、ご要望に応じて上流のコンサルティングフェーズからAI/BIなどのデータ活用支援に至るまで、End to Endで課題解決に向けて伴走することも可能です。
 
