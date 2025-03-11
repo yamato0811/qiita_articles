@@ -250,7 +250,7 @@ class Supervisor:
 ```
 
 :::note info
-サブグラフを追加する際は、サブグラフの状態（state）のスキーマにおけるプロパティを1つ以上，共有キーとして親グラフのstateに含める必要があります。これは、共有キーを介して親グラフとサブグラフの状態を連携させるためです。
+サブグラフを追加する際は、サブグラフの状態（state）のスキーマにおけるプロパティを1つ以上、共有キーとして親グラフのstateに含める必要があります。これは、共有キーを介して親グラフとサブグラフの状態を連携させるためです。
 もし親グラフと全く異なるスキーマ（共有キーなし）を定義したい場合は、サブグラフを呼び出すノード関数を定義する必要があります。
 
 https://langchain-ai.github.io/langgraph/how-tos/subgraph/
@@ -476,7 +476,7 @@ Supervisorで利用するtoolは以下のように定義しています。この
 - 次に実行すべきサブエージェント（Workflow）のノード名（関数内で定義）
 - Workflowの実行に必要なStateの情報（tool useによって生成されたツールの引数）
 
-その後、SupervisorのCommandオブジェクト内で、上記の情報をそれぞれ引数`goto`と`update`に指定してreturnで返しています。この結果，Supervisorはtool useで（間接的に）SubAgentを呼び出し、同時にtool useでWorkflowの実行に必要なStateの情報も生成しています。
+その後、SupervisorのCommandオブジェクト内で、上記の情報をそれぞれ引数`goto`と`update`に指定してreturnで返しています。この結果、Supervisorはtool useで（間接的に）SubAgentを呼び出し、同時にtool useでWorkflowの実行に必要なStateの情報も生成しています。
 
 ```python: agent/tools.py
 @tool
