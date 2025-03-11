@@ -30,7 +30,7 @@ https://qiita.com/yamato0811/items/02688690a85a670b773f
 
 
 ## Agentic Workflow vs Agent
-AI Agentの開発にあたり、「Agentic Workflow」と「Agent（ReAct）」という大きく分けて2つのアプローチがあります。それぞれの特徴と違いを理解し、適切な場面で使い分けることが重要となります。
+AI Agentの開発においては、「Agentic Workflow」と「Agent（ReAct）」という2つの主要なアプローチがあります。それぞれの特徴と違いを理解し、適切な場面で使い分けることが重要です。
 
 ### Agentic Workflow
 Agentic Workflowは、事前に明確に定義された実行順序で、複数のタスク（LLMやツール）を順番に実行する仕組みです。このアプローチの利点は、最終的な出力が一貫性を持ちやすく、正確であることです。
