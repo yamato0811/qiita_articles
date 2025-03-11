@@ -48,7 +48,7 @@ Agent（ReAct）は、状況に応じてLLMがどのツールを使うべきか�
 
 ### Agentic WorkflowとAgentの比較
 
-Agentic Workflowはプロセスが明確で制御が容易な反面、状況変化への対応力や柔軟性には欠けることがあります。一方でAgent（ReAct）は動的で柔軟な判断が可能なため、予測不能な状況や複雑で柔軟な対応が求められるシナリオで効果を発揮します。ただし、Agentはその柔軟性ゆえに動作が予測しづらく、調整やチューニングが難しくなる場合があります。
+Agentic Workflowはプロセスが明確で制御が容易な反面、状況変化への対応力や柔軟性に欠けることがあります。一方で、Agent（ReAct）は柔軟な判断が可能なため、予測不能な状況や、複雑で柔軟な対応が求められるシナリオで効果を発揮します。ただし、Agentはその柔軟性ゆえに動作が予測しづらく、調整やチューニングが必要な場合があります。
 
 |項目| Agentic Workflow| Agent（ReAct）|
 |-|-|-|
@@ -58,7 +58,7 @@ Agentic Workflowはプロセスが明確で制御が容易な反面、状況変�
 | 機能追加の容易性 | △ フローが複雑になるほど実行コストが高い（タスク間の依存関係の管理など） | ◯ Toolを利用するのみで、改修範囲は狭い |
 
 :::note info
-Agentic WorkflowやAgentについては、Anthropicの[Building effective agents](https://www.anthropic.com/engineering/building-effective-agents)やLangGraphドキュメントの[Agent architectures](https://langchain-ai.github.io/langgraph/concepts/agentic_concepts/)の記事が大変参考になります。
+Agentic WorkflowやAgentについては、Anthropicの技術記事[Building effective agents](https://www.anthropic.com/engineering/building-effective-agents)やLangGraphのドキュメント[Agent architectures](https://langchain-ai.github.io/langgraph/concepts/agentic_concepts/)の記事が大変参考になります。
 :::
 
 ## Multi-Agent
