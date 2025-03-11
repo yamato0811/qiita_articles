@@ -105,7 +105,7 @@ WorkflowとMulti-Agentの両方のメリットを享受するため、Multi-Agen
 - handoff(Command): Agentの制御を他のAgentに譲渡する機能
 
 :::note info
-特に、handoff(Command)を`@tool`デコレータを使用して実装することで、SubAgentを（間接的に）ツールとして定義しています。これにより、SupervisorからTool UseでSubAgentを呼び出せるように工夫しています。
+工夫点として、handoff(Command)を`@tool`デコレータを使用して実装することで、SubAgentを（間接的に）ツールとして定義しています。これにより、SupervisorからTool UseでSubAgentを呼びすことが可能です。
 :::
 
 ### LangGraphのグラフ構造
