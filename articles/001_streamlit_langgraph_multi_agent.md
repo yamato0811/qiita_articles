@@ -476,16 +476,17 @@ https://langchain-ai.github.io/langgraph/how-tos/command/
 ```
 
 #### toolの定義
-Supervisorで利用するtoolは以下のように定義しています。このとき、LLMでツール呼び出しを行った際には会話履歴にtool messageを含める必要があるため、messagesに`tool_msg`を追加している点には注意してください。
+Supervisorで利用するtoolは以下のように定義しています。`@tool`でデコレートしたhandoff用の関数（ツール）をSupervisorが呼び出すことで、以下の情報を取得可能です。
 
-また、toolに記載する説明はAnthoropicの[Best practices for tool definitions](https://docs.anthropic.com/en/docs/build-with-claude/tool-use/overview#best-practices-for-tool-definitions)に従い、できるだけ詳細に記載することが重要です。（本来は今よりも更に詳細に記載することが望ましいです）
-
-以上をまとめると、以下に示す`@tool`でデコレートしたhandoff用の関数（ツール）をSupervisorが呼び出すことで、以下の情報を取得しています。
-
-- 次に実行すべきサブエージェント（Workflow）のノード名（関数内で定義）
-- Workflowの実行に必要なStateの情報（tool useによって生成されたツールの引数）
+- 次に実行すべきサブエージェント（Workflow）のノード名（`copy_generator_subgraph`）
+- ツールメッセージ（`[tool_msg]`）
+- Workflowの実行に必要なStateの情報（tool useによって生成されたツールの引数 `theme_copy`）
 
 その後、SupervisorのCommandオブジェクト内で、上記の情報をそれぞれ引数`goto`と`update`に指定してreturnで返しています。この結果、Supervisorはtool useで（間接的に）Sub Agentを呼び出し、同時にtool useでWorkflowの実行に必要なStateの情報も生成しています。
+
+なお、LLMでツール呼び出しを行った際には会話履歴にtool messageを含める必要があるため、toolの返り値の要素の`messages`に`tool_msg`を追加している点には注意してください。
+
+また、toolに記載する説明はAnthoropicの[Best practices for tool definitions](https://docs.anthropic.com/en/docs/build-with-claude/tool-use/overview#best-practices-for-tool-definitions)に従い、できるだけ詳細に記載することが重要です。（本来は今よりも更に詳細に記載することが望ましいです）
 
 ```python: agent/tools.py
 @tool
