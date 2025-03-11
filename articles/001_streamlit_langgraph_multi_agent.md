@@ -678,9 +678,14 @@ def display_message(message: dict) -> None:
 ```
 
 ## 苦労した点
-LangGraphのCommand機能を利用する際、SubGraphとSupervisor間のStateの連携が期待通りに動作しない不具合に直面しました。
+SupervisorとSub Agentのグラフ定義（`@tool`でデコレートしたhandoff用の関数以外）でCommandを利用すると、以下の不具合（バグ）が発生しました。
 
-以下のように、Commad利用時と、利用せずedgeを繋ぐ場合で同じグラフを作っているにもかかわらず挙動が異なっています。
+- SupervisorとSub Agent間のStateの連携がなされない
+- streamメソッドの出力に、Sub Agentの最終ノードの情報が含まれない
+
+具体的には、同一のWorkflowを定義しているにもかかわらず、Commandを利用した場合とadd_edgeを利用した場合のグラフで、以下のように挙動が異なっています。徹底的にドキュメントを確認して仕様を把握し、以下に示す2つの実装の実行結果を比較することで、2つのバグが混在した複雑なバグについて把握し、原因調査しました。
+
+また、上記の回避策として、グラフ（Supervisor, Sub Agent）の構築にはCommandを利用せず、add_edgeを利用することで，期待通りの挙動となることを確認しております。
 
 <details><summary>Commad利用時</summary>
 
@@ -844,9 +849,11 @@ for chunk in main_graph.stream(initial, stream_mode="values", subgraphs=True):
 ```
 </details>
 
-本件についてはLangGraphのGitHubのIssue（#3115）にて既に報告済みであり、開発チームへの質問も行っています。今後の改善アップデートを待ちながら、進展があり次第、情報を更新したいと思います。
+本件についてはLangGraphのGitHubのIssue（#3115, #3362）にて既に報告済みであり、開発チームへの質問も行っています。今後の改善アップデートを待ちながら、進展があり次第、情報を更新したいと思います。
 
 https://github.com/langchain-ai/langgraph/issues/3115
+
+https://github.com/langchain-ai/langgraph/issues/3362
 
 ## まとめ
 本記事では、LangGraphを利用してMulti-Agentアプリケーションを実装する際の手順やポイントを、広告素材生成アプリケーションを題材に紹介しました。
