@@ -63,7 +63,7 @@ Agentic WorkflowやAgentについては、Anthropicの技術記事[Building effe
 
 ## Multi-Agent
 AI Agentが管理するツールの増加や、AI Agentへの指示の複雑化により、単一のエージェントでの対応が困難になる場合があります。そのような状況で有効な解決策となるのがMulti-Agentのアプローチです。
-Multi-Agentシステムでは、専門分野に特化した複数のSubAgentが協調して動作するので、複雑なタスクを処理することが可能です。
+Multi-Agentシステムでは、専門分野に特化した複数のSub Agentが協調して動作するので、複雑なタスクを処理することが可能です。
 
 ### Multi-Agentの利点
 - 各Agentのモジュール化により、Agentごとに開発・テスト・管理が容易になる
@@ -86,7 +86,7 @@ Multi-Agentの構成にはいくつかのパターンが存在します。
 
 
 ## 作成したアプリケーション
-広告の「キャッチコピー文」と「画像」を生成するSupervisor型のMulti-Agentアプリケーションを実装しました。ユーザーが広告に使用する素材の作成を要望すると、Supervisorが各SubAgent（キャッチコピー生成Agent, 画像生成Agent）を適切に呼び出し、目的に応じた広告素材を作成する仕組みとなっています。
+広告の「キャッチコピー文」と「画像」を生成するSupervisor型のMulti-Agentアプリケーションを実装しました。ユーザーが広告に使用する素材の作成を要望すると、Supervisorが各Sub Agent（キャッチコピー生成Agent, 画像生成Agent）を適切に呼び出し、目的に応じた広告素材を作成する仕組みとなっています。
 
 ![output.gif](https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/2840684/da05a46d-f5e3-4be3-a997-ad38a3a66df1.gif)
 
@@ -105,7 +105,7 @@ WorkflowとMulti-Agentの両方のメリットを享受するため、Multi-Agen
 - handoff(Command): Agentの制御を他のAgentに譲渡する機能
 
 :::note info
-工夫点として、handoff(Command)を`@tool`デコレータを使用して実装することで、SubAgentを（間接的に）ツールとして定義しています。これにより、SupervisorからTool UseでSubAgentを呼びすことが可能です。
+工夫点として、handoff(Command)を`@tool`デコレータを使用して実装することで、Sub Agentを（間接的に）ツールとして定義しています。これにより、SupervisorからTool UseでSub Agentを呼びすことが可能です。
 :::
 
 ### LangGraphのグラフ構造
@@ -142,7 +142,7 @@ graph TD;
 
 
 ### アプリの機能
-Supervisorは以下2つの機能を持つSubAgentを管理しており、ユーザーからの要望に応じて各SubAgentに指示を出します。
+Supervisorは以下2つの機能を持つSub Agentを管理しており、ユーザーからの要望に応じて各Sub Agentに指示を出します。
 
 - **コピー文生成エージェント**: 与えられたキーワードをもとに効果的なコピー文を作成する
   - generate_copyノード：Supervisorが指示したキーワードに基づいて初期コピー文を生成
@@ -153,7 +153,7 @@ Supervisorは以下2つの機能を持つSubAgentを管理しており、ユー�
 
 
 ## LangGraphでMulti-Agentの実装
-本章では、LangGraphを使用したAgentグラフの実装方法について、具体的なコード例を交えて説明します。特に、SubAgentとしてWorkflowを定義するために利用した、**SubGraph**と、**handoff(Command)** という機能を中心に解説します。
+本章では、LangGraphを使用したAgentグラフの実装方法について、具体的なコード例を交えて説明します。特に、Sub AgentとしてWorkflowを定義するために利用した、**SubGraph**と、**handoff(Command)** という機能を中心に解説します。
 
 ※ プログラムの一部のみ抜粋していますので、適宜[GitHubのコード](https://github.com/yamato0811/streamlit-langgraph-multi-agent)を参照ください。
 
@@ -191,8 +191,7 @@ class AgentState(TypedDict):
 ```
 
 :::note info
-`messages: Annotated[list, add_messages]`の`​add_messages`は、LangGraphにおける組み込みの関数で、状態（State）内のメッセージリストを管理する際に使用されます。
-​この関数を用いることで、新しいメッセージでStateを更新した際、上書きせずにリストに追加（append）することが可能となります。
+`messages: Annotated[list, add_messages]`の`​add_messages`はリデューサーと呼ばれ、状態（State）の更新時の処理を指定する際に利用します。`​add_messages`はLangGraphにおける組み込みの関数で、状態（State）内のメッセージリストを更新する際、上書きせずにリストに追加（append）することが可能です。
 https://langchain-ai.github.io/langgraph/tutorials/introduction/#part-1-build-a-basic-chatbot
 :::
 
@@ -406,7 +405,7 @@ def supervisor(self, state: AgentState) -> Command[
     state["messages"].append(response)
 ```
 
-その後、SubAgentの処理委譲が必要かどうかを`tool_calls`を使用して判定します。（toolの定義内容については後述します。）
+その後、Sub Agentの処理委譲が必要かどうかを`tool_calls`を使用して判定します。（toolの定義内容については後述します。）
 
 ```python: agent/supervisor.py
     if len(response.tool_calls) > 0:
@@ -476,7 +475,7 @@ Supervisorで利用するtoolは以下のように定義しています。この
 - 次に実行すべきサブエージェント（Workflow）のノード名（関数内で定義）
 - Workflowの実行に必要なStateの情報（tool useによって生成されたツールの引数）
 
-その後、SupervisorのCommandオブジェクト内で、上記の情報をそれぞれ引数`goto`と`update`に指定してreturnで返しています。この結果、Supervisorはtool useで（間接的に）SubAgentを呼び出し、同時にtool useでWorkflowの実行に必要なStateの情報も生成しています。
+その後、SupervisorのCommandオブジェクト内で、上記の情報をそれぞれ引数`goto`と`update`に指定してreturnで返しています。この結果、Supervisorはtool useで（間接的に）Sub Agentを呼び出し、同時にtool useでWorkflowの実行に必要なStateの情報も生成しています。
 
 ```python: agent/tools.py
 @tool
