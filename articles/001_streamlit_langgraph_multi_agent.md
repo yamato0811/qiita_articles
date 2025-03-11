@@ -9,16 +9,16 @@ https://speakerdeck.com/ren8k/langgraph-bedrock-supervisor-agent
 ## はじめに
 株式会社NTTデータ デジタルサクセスコンサルティング事業部の[@yamato0811](https://qiita.com/yamato0811), [@ren8k](https://qiita.com/ren8k)です。
 
-業務の中で、LangGraphを用いたMulti-Agent構築について調査・実装する機会があり、複数のAgentic Workflowを組み合わせたMulti-Agentアプリケーションの開発を行いました。
-今回は、広告素材（コピー文、画像）作成アプリケーションを例に、Multi-Agent実装における主要な技術要素や、実際に開発を進めるうえで得られた知見・ノウハウをお伝えできればと思います。
+業務の中で、LangGraphを用いたMulti-Agentについて調査・実装する機会があり、複数のAgentic Workflowを組み合わせたMulti-Agentアプリケーションの開発を行いました。
+そこで、本記事では、広告素材（コピー文、画像）作成アプリケーションを例に、Multi-Agentにおける主要な技術要素や、実際に開発を進めるうえで得られた知見・ノウハウをお伝えします。
 
-Streamlit×LangGraphを使ったMulti-Agentアプリケーションの実装事例はまだ少なく、試行錯誤の連続でした。本記事では、実装を通じて得られた技術的なポイントや実践的な工夫を共有します。これらの情報が、同様の開発に取り組まれる方々の一助となれば幸いです。
+StreamlitとLangGraphを使ったMulti-Agentアプリケーションの実装事例はまだ少なく、試行錯誤の連続でした。本記事では、実装を通じて得られた技術的なポイントや実践的な工夫を、Python実装と共に解説します。これらの情報が、同様の開発に取り組まれる方々の一助となれば幸いです。
 
 解説用に実装した簡易アプリケーションのリポジトリは、以下のリンクからご確認いただけます。
 
 https://github.com/yamato0811/streamlit-langgraph-multi-agent.git
 
-また、Streamlit × LangGraphで実装するHuman-in-the-loop Agentic Workflowについて解説した記事を、以前に執筆しました。まだご覧になっていない方は、そちらをあわせてお読みいただくとより理解が深まるかと思います！
+また、StreamlitとLangGraphで実装したHuman-in-the-loop Agentic Workflowについて解説した記事を、以前に執筆しました。まだご覧になっていない方は、そちらを合わせてお読みいただくとより理解が深まるかと思います！
 
 https://qiita.com/yamato0811/items/02688690a85a670b773f
 
