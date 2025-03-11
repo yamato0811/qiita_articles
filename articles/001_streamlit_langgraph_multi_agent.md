@@ -63,7 +63,7 @@ Agentic WorkflowやAgentについては、Anthropicの技術記事[Building effe
 
 ## Multi-Agent
 AI Agentが管理するツールの増加や、AI Agentへの指示の複雑化により、単一のエージェントでの対応が困難になる場合があります。そのような状況で有効な解決策となるのがMulti-Agentのアプローチです。
-Multi-Agentシステムでは、専門分野に特化した複数のAgentが協調して動作するので、複雑なタスクを処理することが可能です。
+Multi-Agentシステムでは、専門分野に特化した複数のSubAgentが協調して動作するので、複雑なタスクを処理することが可能です。
 
 ### Multi-Agentの利点
 - 各Agentのモジュール化により、Agentごとに開発・テスト・管理が容易になる
@@ -86,12 +86,11 @@ Multi-Agentの構成にはいくつかのパターンが存在します。
 
 
 ## 作成したアプリケーション
-広告の「キャッチコピー文」と「画像」を生成するSupervisor型のMulti-Agentアプリケーションを実装しました。ユーザーが広告作成に使用する素材の作成を要望すると、Supervisorが各Agent（キャッチコピー生成Agent, 画像生成Agent）を適切に呼び出し、目的に応じた広告素材を作成する仕組みとなっています。
+広告の「キャッチコピー文」と「画像」を生成するSupervisor型のMulti-Agentアプリケーションを実装しました。ユーザーが広告に使用する素材の作成を要望すると、Supervisorが各SubAgent（キャッチコピー生成Agent, 画像生成Agent）を適切に呼び出し、目的に応じた広告素材を作成する仕組みとなっています。
 
 ![output.gif](https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/2840684/da05a46d-f5e3-4be3-a997-ad38a3a66df1.gif)
 
-Python実装は以下に公開しています。
-LLMにはAmazon BedrockのClaude 3.7 Sonnet、画像生成にはAmazon BedrockのAmazon Nova Canvasを利用しています。
+Python実装は以下に公開しています。LLMとしてAmazon BedrockのClaude 3.7 Sonnetを、画像生成AIとしてAmazon BedrockのAmazon Nova Canvasを利用しています。
 
 https://github.com/yamato0811/streamlit-langgraph-multi-agent.git
 
