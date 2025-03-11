@@ -106,7 +106,7 @@ WorkflowとMulti-Agentの両方のメリットを享受するため、Multi-Agen
 - handoff(Command): Agentの制御を他のAgentに譲渡する機能
 
 :::note info
-特に、handoff(Command)を`@tool` デコレータを使用して実装することで、SubAgentを（間接的に）ツールとして定義しています。これにより、SupervisorからTool UseでSubAgentを呼び出せるように工夫しています。
+特に、handoff(Command)を`@tool`デコレータを使用して実装することで、SubAgentを（間接的に）ツールとして定義しています。これにより、SupervisorからTool UseでSubAgentを呼び出せるように工夫しています。
 :::
 
 ### LangGraphのグラフ構造
@@ -668,7 +668,176 @@ def display_message(message: dict) -> None:
                 st.write(message["content"], unsafe_allow_html=True)
 ```
 
+## 苦労した点
+LangGraphのCommand機能を利用する際、SubGraphとSupervisor間のStateの連携が期待通りに動作しない不具合に直面しました。
 
+以下のように、Commad利用時と、利用せずedgeを繋ぐ場合で同じグラフを作っているにもかかわらず挙動が異なっています。
+
+<details><summary>Commad利用時</summary>
+
+出力
+```
+((), {'node_name': ['__start__']})
+((), {'node_name': 'node_1'})
+(('node_2:d41305f4-c2ba-78d9-5d9b-ed1c6b8549da',), {'node_name': 'node_1'})
+(('node_2:d41305f4-c2ba-78d9-5d9b-ed1c6b8549da',), {'node_name': 'subgraph_node_1', 'foo': 'Update at subgraph_node_1!'})
+((), {'node_name': 'subgraph_node_2'})
+((), {'node_name': 'node_3'})
+```
+
+コード
+```python
+from typing import TypedDict
+
+from langgraph.graph import END, START, StateGraph
+from langgraph.types import Command
+from typing_extensions import Literal
+
+
+class State(TypedDict):
+    node_name: str
+    foo: str
+
+
+def subgraph_node_1(state: State) -> Command[Literal["subgraph_node_2"]]:
+    return Command(
+        goto="subgraph_node_2",
+        update={
+            "node_name": "subgraph_node_1",
+            "foo": "Update at subgraph_node_1!",
+        },
+    )
+
+
+def subgraph_node_2(state: State) -> Command:
+    return Command(
+        goto="node_3",
+        update={"node_name": "subgraph_node_2"},
+        graph=Command.PARENT,
+    )
+
+
+subgraph_builder = StateGraph(State)
+subgraph_builder.add_node(subgraph_node_1)
+subgraph_builder.add_node(subgraph_node_2)
+subgraph_builder.add_edge(START, "subgraph_node_1")
+subgraph_builder.add_edge("subgraph_node_2", END)
+subgraph = subgraph_builder.compile()
+
+
+# Define main graph
+def node_1(state: State) -> Command[Literal["node_2"]]:
+    return Command(
+        goto="node_2",
+        update={"node_name": "node_1"},
+    )
+
+
+def node_3(state: State) -> Command[Literal["__end__"]]:
+    return Command(
+        goto=END,
+        update={"node_name": "node_3"},
+    )
+
+
+main_builder = StateGraph(State)
+main_builder.add_node("node_1", node_1)
+main_builder.add_node("node_2", subgraph)
+main_builder.add_node("node_3", node_3)
+main_builder.add_edge(START, "node_1")
+main_builder.add_edge("node_2", "node_3")
+main_graph = main_builder.compile()
+
+
+# Build subgraph
+with open("graph.md", "w") as file:
+    file.write(f"\n{main_graph.get_graph(xray=1).draw_mermaid()}")
+
+initial = {"node_name": ["__start__"]}
+for chunk in main_graph.stream(initial, stream_mode="values", subgraphs=True):
+    print(chunk)
+```
+</details>
+
+<details><summary>Commandを利用しない場合（期待する動作）</summary>
+
+出力
+```
+((), {'node_name': ['__start__']})
+((), {'node_name': 'node_1'})
+(('node_2:cd87a0ec-b602-da30-ffca-48950974937f',), {'node_name': 'node_1'})
+(('node_2:cd87a0ec-b602-da30-ffca-48950974937f',), {'node_name': 'subgraph_node_1', 'foo': 'Update at subgraph_node_1!'})
+(('node_2:cd87a0ec-b602-da30-ffca-48950974937f',), {'node_name': 'subgraph_node_2', 'foo': 'Update at subgraph_node_1!'})
+((), {'node_name': 'subgraph_node_2', 'foo': 'Update at subgraph_node_1!'})
+((), {'node_name': 'node_3', 'foo': 'Update at subgraph_node_1!'})
+```
+
+
+コード
+```python
+from typing import TypedDict
+
+from langgraph.graph import END, START, StateGraph
+
+
+class State(TypedDict):
+    node_name: str
+    foo: str
+
+
+def subgraph_node_1(state: State):
+    return {
+        "node_name": "subgraph_node_1",
+        "foo": "Update at subgraph_node_1!",
+    }
+
+
+def subgraph_node_2(state: State):
+    return {"node_name": "subgraph_node_2"}
+
+
+subgraph_builder = StateGraph(State)
+subgraph_builder.add_node(subgraph_node_1)
+subgraph_builder.add_node(subgraph_node_2)
+subgraph_builder.add_edge(START, "subgraph_node_1")
+subgraph_builder.add_edge("subgraph_node_1", "subgraph_node_2")
+subgraph_builder.add_edge("subgraph_node_2", END)
+subgraph = subgraph_builder.compile()
+
+
+# Define main graph
+def node_1(state: State):
+    return {"node_name": "node_1"}
+
+
+def node_3(state: State):
+    return {"node_name": "node_3"}
+
+
+main_builder = StateGraph(State)
+main_builder.add_node("node_1", node_1)
+main_builder.add_node("node_2", subgraph)
+main_builder.add_node("node_3", node_3)
+main_builder.add_edge(START, "node_1")
+main_builder.add_edge("node_1", "node_2")
+main_builder.add_edge("node_2", "node_3")
+main_builder.add_edge("node_3", END)
+main_graph = main_builder.compile()
+
+
+# Build subgraph
+with open("graph.md", "w") as file:
+    file.write(f"```mermaid\n{main_graph.get_graph(xray=1).draw_mermaid()}```")
+
+initial = {"node_name": ["__start__"]}
+for chunk in main_graph.stream(initial, stream_mode="values", subgraphs=True):
+    print(chunk)
+```
+</details>
+
+本件についてはLangGraphのGitHubのIssue（#3115）にて既に報告済みであり、開発チームへの質問も行っています。今後の改善アップデートを待ちながら、進展があり次第、情報を更新したいと思います。
+
+https://github.com/langchain-ai/langgraph/issues/3115
 
 ## まとめ
 本記事では、LangGraphを利用してMulti-Agentアプリケーションを実装する際の手順やポイントを、広告素材生成アプリケーションを題材に紹介しました。
