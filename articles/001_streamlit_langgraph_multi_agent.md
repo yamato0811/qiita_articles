@@ -9,16 +9,16 @@ https://speakerdeck.com/ren8k/langgraph-bedrock-supervisor-agent
 ## はじめに
 株式会社NTTデータ デジタルサクセスコンサルティング事業部の[@yamato0811](https://qiita.com/yamato0811), [@ren8k](https://qiita.com/ren8k)です。
 
-業務の中で、LangGraphを用いたMulti-Agent構築について調査・実装する機会があり、複数のAgentic Workflowを組み合わせたMulti-Agentアプリケーションの開発を行いました。
-今回は、広告素材（コピー文、画像）作成アプリケーションを例に、Multi-Agent実装における主要な技術要素や、実際に開発を進めるうえで得られた知見・ノウハウをお伝えできればと思います。
+業務の中で、LangGraphを用いたMulti-Agentについて調査・実装する機会があり、複数のAgentic Workflowを組み合わせたMulti-Agentアプリケーションの開発を行いました。
+そこで、本記事では、広告素材（コピー文、画像）作成アプリケーションを例に、Multi-Agentにおける主要な技術要素や、実際に開発を進めるうえで得られた知見・ノウハウをお伝えします。
 
-Streamlit×LangGraphを使ったMulti-Agentアプリケーションの実装事例はまだ少なく、試行錯誤の連続でした。本記事では、実装を通じて得られた技術的なポイントや実践的な工夫を共有します。これらの情報が、同様の開発に取り組まれる方々の一助となれば幸いです。
+StreamlitとLangGraphを使ったMulti-Agentアプリケーションの実装事例はまだ少なく、試行錯誤の連続でした。本記事では、実装を通じて得られた技術的なポイントや実践的な工夫を、Python実装と共に解説します。これらの情報が、同様の開発に取り組まれる方々の一助となれば幸いです。
 
 解説用に実装した簡易アプリケーションのリポジトリは、以下のリンクからご確認いただけます。
 
 https://github.com/yamato0811/streamlit-langgraph-multi-agent.git
 
-また、Streamlit × LangGraphで実装するHuman-in-the-loop Agentic Workflowについて解説した記事を、以前に執筆しました。まだご覧になっていない方は、そちらをあわせてお読みいただくとより理解が深まるかと思います！
+また、StreamlitとLangGraphで実装したHuman-in-the-loop Agentic Workflowについて解説した記事を、以前に執筆しました。まだご覧になっていない方は、そちらを合わせてお読みいただくとより理解が深まるかと思います！
 
 https://qiita.com/yamato0811/items/02688690a85a670b773f
 
@@ -30,25 +30,25 @@ https://qiita.com/yamato0811/items/02688690a85a670b773f
 
 
 ## Agentic Workflow vs Agent
-AI Agentの開発にあたり、「Agentic Workflow」と「Agent（ReAct）」という大きく分けて2つのアプローチがあります。それぞれの特徴と違いを理解し、適切な場面で使い分けることが重要となります。
+AI Agentの開発においては、「Agentic Workflow」と「Agent（ReAct）」という2つの主要なアプローチがあります。それぞれの特徴と違いを理解し、適切な場面で使い分けることが重要です。
 
 ### Agentic Workflow
 Agentic Workflowは、事前に明確に定義された実行順序で、複数のタスク（LLMやツール）を順番に実行する仕組みです。このアプローチの利点は、最終的な出力が一貫性を持ちやすく、正確であることです。
 
 <img src="https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/2840684/bcee1a24-9923-4e04-8455-5cd54108d15e.png" width="400">
 
-各ステップはあらかじめ決められているため、プロセスが制御しやすく、結果も安定しやすいのが特長です。
+各タスクの実行順序は予め決められているため、プロセスが制御しやすく、結果も安定しやすいのが特長です。
 
 ### Agent
 Agent（ReAct）は、状況に応じてLLMがどのツールを使うべきかを自律的に決定し、ツールの実行結果をもとに次のアクションを柔軟に選択する仕組みです。この仕組みでは、LLMが考え、行動し、その結果を観察して再び考える（Reasoning, Acting, Observation）というサイクルを繰り返します。
 
 <img src="https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/2840684/58d8b38c-a600-43aa-97a7-b0c8815b3e4e.png" width="400">
 
-実行タスクを動的に決定できるため、ユーザーのニーズに対し柔軟かつ動的に対応可能です。
+実行タスクやその実行順序を動的に決定できるため、ユーザーのニーズに対し柔軟に対応可能です。
 
 ### Agentic WorkflowとAgentの比較
 
-Agentic Workflowはプロセスが明確で制御が容易な反面、状況変化への対応力や柔軟性には欠けることがあります。一方でAgent（ReAct）は動的で柔軟な判断が可能なため、予測不能な状況や複雑で柔軟な対応が求められるシナリオで効果を発揮します。ただし、Agentはその柔軟性ゆえに動作が予測しづらく、調整やチューニングが難しくなる場合があります。
+Agentic Workflowはプロセスが明確で制御が容易な反面、状況変化への対応力や柔軟性に欠けることがあります。一方で、Agent（ReAct）は柔軟な判断が可能なため、予測不能な状況や、複雑で柔軟な対応が求められるシナリオで効果を発揮します。ただし、Agentはその柔軟性ゆえに動作が予測しづらく、調整やチューニングが必要な場合があります。
 
 |項目| Agentic Workflow| Agent（ReAct）|
 |-|-|-|
@@ -58,16 +58,16 @@ Agentic Workflowはプロセスが明確で制御が容易な反面、状況変�
 | 機能追加の容易性 | △ フローが複雑になるほど実行コストが高い（タスク間の依存関係の管理など） | ◯ Toolを利用するのみで、改修範囲は狭い |
 
 :::note info
-Agentic WorkflowやAgentについては、Anthropicの[Building effective agents](https://www.anthropic.com/engineering/building-effective-agents)やLangGraphドキュメントの[Agent architectures](https://langchain-ai.github.io/langgraph/concepts/agentic_concepts/)の記事が大変参考になります。
+Agentic WorkflowやAgentについては、Anthropicの技術記事[Building effective agents](https://www.anthropic.com/engineering/building-effective-agents)やLangGraphのドキュメント[Agent architectures](https://langchain-ai.github.io/langgraph/concepts/agentic_concepts/)の記事が大変参考になります。
 :::
 
 ## Multi-Agent
-AI Agentのアプリケーションが複雑になるにつれ、単一のエージェントで全てを管理することが難しくなる場合があります。そのような場合に有効なのがMulti-Agentです。
-Multi-Agentでは複数の独立したAgentが協調して動作するので、複雑なタスクを処理することが可能です。
+AI Agentが管理するツールの増加や、AI Agentへの指示の複雑化により、単一のエージェントでの対応が困難になる場合があります。そのような状況で有効な解決策となるのがMulti-Agentのアプローチです。
+Multi-Agentシステムでは、専門分野に特化した複数のSub Agentが協調して動作するので、複雑なタスクを処理することが可能です。
 
 ### Multi-Agentの利点
-- 各Agentのモジュール化により、Agentごとに開発・テスト・管理が簡単
-- 特定の領域に特化した専門Agentを構築でき、全体のパフォーマンスが向上する
+- 各Agentのモジュール化により、Agentごとに開発・テスト・管理が容易になる
+- 特定の領域に特化した専門Agentを構築でき、システム全体のパフォーマンスが向上する
 - エージェント間の通信方法を明確に制御できる
 
 ### Multi-Agentの構成パターン
@@ -86,12 +86,11 @@ Multi-Agentの構成にはいくつかのパターンが存在します。
 
 
 ## 作成したアプリケーション
-広告の「キャッチコピー文」と「画像」を生成するSupervisor型のMulti-Agentアプリケーションを実装しました。ユーザーが広告作成に使用する素材の作成を要望すると、Supervisorが各Agent（キャッチコピー生成Agent, 画像生成Agent）を適切に呼び出し、目的に応じた広告素材を作成する仕組みとなっています。
+広告の「キャッチコピー文」と「画像」を生成するSupervisor型のMulti-Agentアプリケーションを実装しました。ユーザーが広告に使用する素材の作成を要望すると、Supervisorが各Sub Agent（キャッチコピー生成Agent, 画像生成Agent）を適切に呼び出し、目的に応じた広告素材を作成する仕組みとなっています。
 
 ![output.gif](https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/2840684/da05a46d-f5e3-4be3-a997-ad38a3a66df1.gif)
 
-Python実装は以下に公開しています。
-LLMにはAmazon BedrockのClaude 3.7 Sonnet、画像生成にはAmazon BedrockのAmazon Nova Canvasを利用しています。
+Python実装は以下に公開しています。LLMとしてAmazon BedrockのClaude 3.7 Sonnetを、画像生成AIとしてAmazon BedrockのAmazon Nova Canvasを利用しています。
 
 https://github.com/yamato0811/streamlit-langgraph-multi-agent.git
 
@@ -106,7 +105,7 @@ WorkflowとMulti-Agentの両方のメリットを享受するため、Multi-Agen
 - handoff(Command): Agentの制御を他のAgentに譲渡する機能
 
 :::note info
-特に、handoff(Command)を`@tool`デコレータを使用して実装することで、SubAgentを（間接的に）ツールとして定義しています。これにより、SupervisorからTool UseでSubAgentを呼び出せるように工夫しています。
+工夫点として、handoff(Command)を`@tool`デコレータを使用して実装することで、Sub Agentを（間接的に）ツールとして定義しています。これにより、SupervisorからTool UseでSub Agentを呼びすことが可能です。
 :::
 
 ### LangGraphのグラフ構造
@@ -143,20 +142,20 @@ graph TD;
 
 
 ### アプリの機能
-Supervisorは以下2つの機能を持つエージェントを管理しており、ユーザーからの要望に応じて各エージェントに指示を出します。
+Supervisorは以下2つの機能を持つSub Agentを管理しており、ユーザーからの要望に応じて各Sub Agentに指示を出します。
 
-- **コピー文生成エージェント**: 与えられたキーワードをもとに効果的なコピー文を作成
+- **コピー文生成エージェント**: 与えられたキーワードをもとに効果的なコピー文を作成する
   - generate_copyノード：Supervisorが指示したキーワードに基づいて初期コピー文を生成
-  - refine_copyノード：生成した初期コピー文をさらに改善する
+  - refine_copyノード：生成した初期コピー文をさらに改善
 - **画像生成エージェント**: 画像の主題に基づいて、画像を生成する
   - generate_promptノード：Supervisorが指示した画像の主題に基づいて画像生成用のプロンプトを作成
   - generate_imageノード：作成したプロンプトを元に画像を生成
 
 
 ## LangGraphでMulti-Agentの実装
-本章では、LangGraphを使用したAgentグラフの実装方法について、具体的なコード例を交えて説明します。特に、SubAgentとしてWorkflowを定義するために利用した、**SubGraph**と、**handoff(Command)** という機能を中心に解説します。
+本章では、LangGraphを使用したAgentグラフの実装方法について、具体的なコード例を交えて説明します。特に、Sub AgentとしてWorkflowを定義するために利用した、**SubGraph**と、**handoff(Command)** という機能を中心に解説します。
 
-※ プログラムの一部のみ抜粋していますので、適宜githubコードを参照ください。
+※ プログラムの一部のみ抜粋していますので、適宜[GitHubのコード](https://github.com/yamato0811/streamlit-langgraph-multi-agent)を参照ください。
 
 ### Stateの定義
 グラフのノード間を遷移するState情報は`agent/state.py`に以下のように定義しています。  
@@ -192,8 +191,7 @@ class AgentState(TypedDict):
 ```
 
 :::note info
-`messages: Annotated[list, add_messages]`の`​add_messages`は、LangGraphにおける組み込みの関数で、状態（State）内のメッセージリストを管理する際に使用されます。
-​この関数を用いることで、新しいメッセージでStateを更新した際、上書きせずにリストに追加（append）することが可能となります。
+`messages: Annotated[list, add_messages]`の`​add_messages`はリデューサーと呼ばれ、状態（State）の更新時の処理を指定する際に利用します。`​add_messages`はLangGraphにおける組み込みの関数で、状態（State）内のメッセージリストを更新する際、上書きせずにリストに追加（append）することが可能です。
 https://langchain-ai.github.io/langgraph/tutorials/introduction/#part-1-build-a-basic-chatbot
 :::
 
@@ -204,7 +202,7 @@ Workflowで構成した各Sub Agentを階層的に管理するため、SubGraph�
 #### Supervisorの定義
 `agent/supervisor.py`でSupervisorのグラフを構築しています。まず、`__init__`関数で、Supervisorが利用するツールの設定を行います。グラフの定義およびコンパイル処理は、`build_graph`関数で行っています。
 
-すでにコンパイル済みのグラフ（`copy_generator`や`image_generator`）を直接ノードとして`add_node`することでサブグラフとして追加することができます。
+すでにコンパイル済みのグラフ（`copy_generator`や`image_generator`）を直接ノードとして`add_node`することで、Agentic Workflowをサブグラフとして利用することができます。
 
 :::note warn
 ツールとして、handoffによりサブエージェントに制御を譲渡するための関数（`handoff_to_copy_generator`や`handoff_to_image_generator`）を定義しています。これら解説については、後述の[セクション](#handoffcommand)で詳しく行います。
@@ -251,7 +249,7 @@ class Supervisor:
 ```
 
 :::note info
-サブグラフを追加する際は、サブグラフの状態（state）のスキーマにおけるプロパティを1つ以上，共有キーとして親グラフのstateに含める必要があります。これは、共有キーを介して親グラフとサブグラフの状態を連携させるためです。
+サブグラフを追加する際は、サブグラフの状態（state）のスキーマにおけるプロパティを1つ以上、共有キーとして親グラフのstateに含める必要があります。これは、共有キーを介して親グラフとサブグラフの状態を連携させるためです。
 もし親グラフと全く異なるスキーマ（共有キーなし）を定義したい場合は、サブグラフを呼び出すノード関数を定義する必要があります。
 
 https://langchain-ai.github.io/langgraph/how-tos/subgraph/
@@ -259,9 +257,19 @@ https://langchain-ai.github.io/langgraph/how-tos/subgraph/
 
 #### Sub Agentの定義
 Sub Agentのグラフの代表例として、CopyGeneratorのSubGraphについて説明します。
-CopyGeneratorのサブグラフでは、キャッチコピーの生成と改善という機能を持つ2つのノードを定義しています。
+CopyGeneratorは、キャッチコピーの生成を行うノード（`generate_copy`）とコピーの改善を行うノード（`refine_copy`）を定義したAgentic Workflowです。
 
-このSubGraphは単純な直線的な構造で、generate_copyからrefine_copyへと順番に処理を進め、最後にSupervisorに結果を返しています。
+このSubGraphは単純な直線的な構造で、generate_copyからrefine_copyへと順番に処理を進めます。
+
+:::note info
+
+最終的にSupervisorに制御が移るように、以下のようにSupervisorのグラフ内で定義しています。
+
+```python
+graph_builder.add_edge("copy_generator_subgraph", "supervisor")
+```
+
+:::
 
 ```python: agent/copy_generator.py
 from langgraph.graph import StateGraph
@@ -289,7 +297,7 @@ class CopyGenerator:
 
 CopyGeneratorの各ノードの処理関数は以下のように記載しています。
 
-`generate_copy()`では、Supervisorから受け取ったコピーのテーマ`state['theme_copy']`をもとにLLMを実行し、キャッチコピーを生成します。生成結果は`draft_copy`として返します。`refine_copy()`では、`generate_copy()`で生成した`draft_copy`を受け取り、LLM実行により改善したコピーを返します。
+`generate_copy()`では、Supervisorから受け取ったコピーのテーマ`state['theme_copy']`を基にLLMを実行し、キャッチコピーを生成します。生成結果は`draft_copy`として返します。`refine_copy()`では、`generate_copy()`で生成した`draft_copy`を受け取り、LLM実行により改善したコピーを返します。
 
 また、`display_message_dict`には、Streamlitに表示するためのメッセージを格納しています。
 
@@ -407,7 +415,7 @@ def supervisor(self, state: AgentState) -> Command[
     state["messages"].append(response)
 ```
 
-その後、SubAgentの処理委譲が必要かどうかを`tool_calls`を使用して判定します。（toolの定義内容については後述します。）
+その後、Sub Agentの処理委譲が必要かどうかを`tool_calls`を使用して判定します。（toolの定義内容については後述します。）
 
 ```python: agent/supervisor.py
     if len(response.tool_calls) > 0:
@@ -419,7 +427,7 @@ def supervisor(self, state: AgentState) -> Command[
             invoke_result = json.loads(tool_response.content)
 ```
 
-ツール呼び出しの結果から得られた`goto`と`update`を使い、Commandオブジェクトを生成して返します。これにより、処理は次のサブエージェント（`copy_generator_subgraph`や`image_generator_subgraph`）へ移譲されます。
+ツール呼び出しの結果から得られた`goto`と`update`を使い、Commandオブジェクトを返します。これにより、処理は次のサブエージェント（`goto`に格納されている`copy_generator_subgraph`や`image_generator_subgraph`）へ移譲されます。
 
 ```python: agent/supervisor.py
         # for bedrock
@@ -468,16 +476,17 @@ https://langchain-ai.github.io/langgraph/how-tos/command/
 ```
 
 #### toolの定義
-Supervisorで利用するtoolは以下のように定義しています。このとき、LLMでツール呼び出しを行った際には会話履歴にtool messageを含める必要があるため、messagesに`tool_msg`を追加している点には注意してください。
+Supervisorで利用するtoolは以下のように定義しています。`@tool`でデコレートしたhandoff用の関数（ツール）をSupervisorが呼び出すことで、以下の情報を取得可能です。
+
+- 次に実行すべきサブエージェント（Workflow）のノード名（`copy_generator_subgraph`）
+- ツールメッセージ（`[tool_msg]`）
+- Workflowの実行に必要なStateの情報（tool useによって生成されたツールの引数 `theme_copy`）
+
+その後、SupervisorのCommandオブジェクト内で、上記の情報をそれぞれ引数`goto`と`update`に指定してreturnで返しています。この結果、Supervisorはtool useで（間接的に）Sub Agentを呼び出し、同時にtool useでWorkflowの実行に必要なStateの情報も生成しています。
+
+なお、LLMでツール呼び出しを行った際には会話履歴にtool messageを含める必要があるため、toolの返り値の要素の`messages`に`tool_msg`を追加している点には注意してください。
 
 また、toolに記載する説明はAnthoropicの[Best practices for tool definitions](https://docs.anthropic.com/en/docs/build-with-claude/tool-use/overview#best-practices-for-tool-definitions)に従い、できるだけ詳細に記載することが重要です。（本来は今よりも更に詳細に記載することが望ましいです）
-
-以上をまとめると、以下に示す`@tool`でデコレートしたhandoff用の関数（ツール）をSupervisorが呼び出すことで、以下の情報を取得しています。
-
-- 次に実行すべきサブエージェント（Workflow）のノード名（関数内で定義）
-- Workflowの実行に必要なStateの情報（tool useによって生成されたツールの引数）
-
-その後、SupervisorのCommandオブジェクト内で、上記の情報をそれぞれ引数`goto`と`update`に指定してreturnで返しています。この結果，Supervisorはtool useで（間接的に）SubAgentを呼び出し、同時にtool useでWorkflowの実行に必要なStateの情報も生成しています。
 
 ```python: agent/tools.py
 @tool
@@ -669,9 +678,14 @@ def display_message(message: dict) -> None:
 ```
 
 ## 苦労した点
-LangGraphのCommand機能を利用する際、SubGraphとSupervisor間のStateの連携が期待通りに動作しない不具合に直面しました。
+SupervisorとSub Agentのグラフ定義（`@tool`でデコレートしたhandoff用の関数以外）でCommandを利用すると、以下の不具合（バグ）が発生しました。
 
-以下のように、Commad利用時と、利用せずedgeを繋ぐ場合で同じグラフを作っているにもかかわらず挙動が異なっています。
+- SupervisorとSub Agent間のStateの連携がなされない
+- streamメソッドの出力に、Sub Agentの最終ノードの情報が含まれない
+
+具体的には、同一のWorkflowを定義しているにもかかわらず、Commandを利用した場合とadd_edgeを利用した場合のグラフで、以下のように挙動が異なっています。徹底的にドキュメントを確認して仕様を把握し、以下に示す2つの実装の実行結果を比較することで、2つのバグが混在した複雑なバグについて把握し、原因調査しました。
+
+また、上記の回避策として、グラフ（Supervisor, Sub Agent）の構築にはCommandを利用せず、add_edgeを利用することで，期待通りの挙動となることを確認しております。
 
 <details><summary>Commad利用時</summary>
 
@@ -835,9 +849,11 @@ for chunk in main_graph.stream(initial, stream_mode="values", subgraphs=True):
 ```
 </details>
 
-本件についてはLangGraphのGitHubのIssue（#3115）にて既に報告済みであり、開発チームへの質問も行っています。今後の改善アップデートを待ちながら、進展があり次第、情報を更新したいと思います。
+本件についてはLangGraphのGitHubのIssue（#3115, #3362）にて既に報告済みであり、開発チームへの質問も行っています。今後の改善アップデートを待ちながら、進展があり次第、情報を更新したいと思います。
 
 https://github.com/langchain-ai/langgraph/issues/3115
+
+https://github.com/langchain-ai/langgraph/issues/3362
 
 ## まとめ
 本記事では、LangGraphを利用してMulti-Agentアプリケーションを実装する際の手順やポイントを、広告素材生成アプリケーションを題材に紹介しました。
