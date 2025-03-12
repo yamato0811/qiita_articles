@@ -59,7 +59,7 @@ Agentic Workflowはプロセスが明確で制御が容易な反面、状況変�
 | 回答の一貫性| ◯ タスク実行順序は決定的で制御しやすい| △ 想定通りのタスクの実行順序になるとは限らない |
 | 全体的なレイテンシー | ◯ タスクを直列に実行するのみ | △ タスク（Tool）実行の度にLLMの思考がある |
 | 柔軟性 | △ 一部のタスクのみを実行することはできない | ◯ LLMが実行すべきタスクや実行順序を動的に決定する |
-| 機能追加の容易性 | △ フローが複雑になるほど実行コストが高い（タスク間の依存関係の管理など） | ◯ Toolを利用するのみで、改修範囲は狭い |
+| 機能追加の容易性 | △ フローが複雑になるほど実装コストが高い（タスク間の依存関係の管理など） | ◯ Toolを利用するのみで、改修範囲は狭い |
 
 :::note info
 Agentic WorkflowやAgentについては、Anthropicの技術記事[Building effective agents](https://www.anthropic.com/engineering/building-effective-agents)やLangGraphのドキュメント[Agent architectures](https://langchain-ai.github.io/langgraph/concepts/agentic_concepts/)の記事が大変参考になります。
