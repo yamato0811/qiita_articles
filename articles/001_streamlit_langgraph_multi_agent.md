@@ -90,7 +90,9 @@ Multi-Agentの構成にはいくつかのパターンが存在します。
 
 
 ## 作成したアプリケーション
-広告の「キャッチコピー文」と「画像」を生成するSupervisor型のMulti-Agentアプリケーションを実装しました。ユーザーが広告に使用する素材の作成を要望すると、Supervisorが各Sub Agent（キャッチコピー生成Agent, 画像生成Agent）を適切に呼び出し、目的に応じた広告素材を作成する仕組みとなっています。
+広告の「キャッチコピー文」と「画像」を生成するMulti-Agentアプリケーションを実装しました。Multi-Agent構成には、複数の専門エージェントを定義することができ、拡張性の高いSupervisor型を採用しています。
+
+ユーザーが広告に使用する素材の作成を要望すると、Supervisorが各Sub Agent（キャッチコピー生成Agent, 画像生成Agent）を適切に呼び出し、目的に応じた広告素材を作成する仕組みとなっています。
 
 ![output.gif](https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/2840684/da05a46d-f5e3-4be3-a997-ad38a3a66df1.gif)
 
@@ -106,10 +108,16 @@ WorkflowとMulti-Agentの両方のメリットを享受するため、Multi-Agen
 上記のアイデアを実現するために、LangGraphの以下の機能を利用しています。
 
 - SubGraph: グラフ（Agentic Workflow, Agent）をノードとして利用する機能
-- handoff(Command): Agentの制御を他のAgentに譲渡する機能
+- tool use(@tool) + handoff(Command): 実行すべきAgentを選択し、そのAgentへ実行制御と必要情報を引き継ぐ機能
 
 :::note info
-工夫点として、handoff(Command)を`@tool`デコレータを使用して実装することで、Sub Agentを（間接的に）ツールとして定義しています。これにより、SupervisorからTool UseでSub Agentを呼びすことが可能です。
+Supervisor型のMulti-Agentを実装する際、ユーザーが入力したプロンプトからSub Agentへ渡すべき必要な情報をどのように抽出し、伝達するかが課題でした。
+
+この課題に対し、LangGraphの機能を様々調査・検証した結果、@toolデコレータとhandoff(Command)を組み合わせた手法が有効であると考えました。具体的には、Supervisor側でユーザープロンプトを受け取り、Workflowの最初のノードの実行に必要な情報（引数）を生成するツールを定義します。このツールは@toolを用いて実装され、内部でCommandオブジェクトを返すことでハンドオフを実現します。
+
+この仕組みでは、stateを介して情報が伝達されるため、ユーザープロンプトから必要な情報だけを正確に抽出し、Sub Agentに引き渡すことが可能となります。
+
+なお、tool useを利用したエージェント間でのハンドオフの実装例は、LangGraphのドキュメント[How to implement handoffs between agents](https://langchain-ai.github.io/langgraph/how-tos/agent-handoffs/)を参考にしています。
 :::
 
 ### LangGraphのグラフ構造
