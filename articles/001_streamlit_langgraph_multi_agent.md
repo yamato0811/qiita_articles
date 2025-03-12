@@ -867,7 +867,7 @@ https://github.com/langchain-ai/langgraph/issues/3115
 https://github.com/langchain-ai/langgraph/issues/3362
 
 ## まとめ
-本記事では、LangGraphを利用してMulti-Agentアプリケーションを実装する際の手順やポイントを、広告素材生成アプリケーションを題材に紹介しました。
+本記事では、LangGraphとAmazon Bedrockを活用し、Agentic WorkflowとSupervisor型Multi-Agentを組み合わせた広告素材生成アプリケーションの実装事例をご紹介しました。
 まだMulti-Agentの実装事例は少なく、実装方法が不明瞭な部分も多い中で、本記事のサンプル実装が何らかの指針として参考になれば幸いです。
 
 ## 仲間募集
