@@ -9,7 +9,7 @@ https://speakerdeck.com/ren8k/langgraph-bedrock-supervisor-agent
 ## はじめに
 株式会社NTTデータ デジタルサクセスコンサルティング事業部の[@yamato0811](https://qiita.com/yamato0811), [@ren8k](https://qiita.com/ren8k)です。
 
-本記事では、LangGraphとAmazon Bedrockを利用し、**「Agentic WorkflowをSupervisor型のMulti-Agentで利用する」**というアイデアを採用してアプリケーションを実装した事例をご紹介します。Agentic Workflowの強みである「決定的なタスク実行」と、Agent（ReAct）の強みである「柔軟な対応力」を両立させることで、より幅広いシナリオに対応可能なAI Agentを実現しました。
+本記事では、LangGraphとAmazon Bedrockを利用し、「**Agentic WorkflowをSupervisor型のMulti-Agentで利用する**」というアイデアを採用してアプリケーションを実装した事例をご紹介します。Agentic Workflowの強みである「決定的なタスク実行」と、Agent（ReAct）の強みである「柔軟な対応力」を両立させることで、より幅広いシナリオに対応可能なAI Agentを実現しました。
 
 具体的には、広告素材（コピー文、画像）作成アプリケーションを例に、複数のAgentic Workflowを組み合わせて構成したMulti-Agentの設計ポイントや、開発を進める中で得られた知見をお伝えします。特に、LangGraphでのMulti-Agentを実装する事例は少なく、実装にあたっては数多くの試行錯誤を重ねてきました。実装を通じて得られた技術的なポイントや実践的な工夫を、Pythonのコード例とともに解説しますので、同様の実装に取り組まれている方の参考になれば幸いです。
 
