@@ -22,6 +22,10 @@ https://github.com/yamato0811/streamlit-langgraph-multi-agent.git
 
 https://qiita.com/yamato0811/items/02688690a85a670b773f
 
+本内容は、弊社でのAWS Japan生成AI実用化推進プログラムでの取り組みの一環です。プログラムにおける取り組み内容は、以下のnoteにて外部発信していますのでぜひご覧ください！
+
+https://note.com/digitalsuccess/n/n958487f4d1cf
+
 
 ## 想定読者
 - Streamlitを用いたアプリケーション開発経験がある方
