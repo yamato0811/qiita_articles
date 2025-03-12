@@ -695,7 +695,7 @@ Sub Agent（サブグラフ）内のエッジの定義に`Command`を利用す�
 基本的に、`Command`は`add_edge`で代替することが可能です。しかし、ツール（`@tool`でデコレートしたhandoff用の関数）の実行結果に応じて、次に実行するサブグラフを動的に決定したり、異なるStateを更新する場合、`Command`を利用しなければ実装が非常に複雑になってしまいます。
 :::
 
-<details><summary>`Command`を利用する場合</summary>
+<details><summary>Commandを利用する場合</summary>
 
 出力
 ```
@@ -781,7 +781,7 @@ for chunk in main_graph.stream(initial, stream_mode="values", subgraphs=True):
 ```
 </details>
 
-<details><summary>`Command`を`利用せずadd_edge`を利用する場合（期待する動作）</summary>
+<details><summary>Commandを利用せずadd_edgeを利用する場合（期待する動作）</summary>
 
 出力
 ```
