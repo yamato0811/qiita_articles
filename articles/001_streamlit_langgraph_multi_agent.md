@@ -678,16 +678,16 @@ def display_message(message: dict) -> None:
 ```
 
 ## 苦労した点
-SupervisorとSub Agentのグラフ定義（`@tool`でデコレートしたhandoff用の関数以外）でCommandを利用すると、以下の不具合（バグ）が発生しました。
+SupervisorとSub Agentのグラフのノード（`@tool`でデコレートしたhandoff用の関数以外）でCommandを利用すると、以下の不具合（バグ）が発生しました。（2025/03/12時点で未解決）
 
 - SupervisorとSub Agent間のStateの連携がなされない
 - streamメソッドの出力に、Sub Agentの最終ノードの情報が含まれない
 
-具体的には、同一のWorkflowを定義しているにもかかわらず、Commandを利用した場合とadd_edgeを利用した場合のグラフで、以下のように挙動が異なっています。徹底的にドキュメントを確認して仕様を把握し、以下に示す2つの実装の実行結果を比較することで、2つのバグが混在した複雑なバグについて把握し、原因調査しました。
+具体的には、同一のWorkflowを定義しているにもかかわらず、Commandを利用した場合とadd_edgeを利用した場合のグラフで、以下のように挙動が異なっています。本事象は2つのバグが混在した複雑な課題でしたが、徹底的にドキュメントを確認して仕様を把握し、以下に示す2つの実装の実行結果を比較することで、原因調査しました。
 
-また、上記の回避策として、グラフ（Supervisor, Sub Agent）の構築にはCommandを利用せず、add_edgeを利用することで，期待通りの挙動となることを確認しております。
+上記の回避策として、グラフ（Supervisor, Sub Agent）の構築にはCommandを利用せず、add_edgeを利用することで、期待通りの挙動となることを確認しております。また、本記事で紹介したような、ツール内部でのCommandの利用では、上記のバグは発生しないことも確認しております。
 
-<details><summary>Commad利用時</summary>
+<details><summary>Command利用時</summary>
 
 出力
 ```
@@ -849,7 +849,7 @@ for chunk in main_graph.stream(initial, stream_mode="values", subgraphs=True):
 ```
 </details>
 
-本件についてはLangGraphのGitHubのIssue（#3115, #3362）にて既に報告済みであり、開発チームへの質問も行っています。今後の改善アップデートを待ちながら、進展があり次第、情報を更新したいと思います。
+本件についてはLangGraphのGitHubのIssue（#3115, #3362）にて既に報告済みであり、開発チームと議論を行っています。今後の改善アップデートを待ちながら、進展があり次第、情報を更新したいと思います。
 
 https://github.com/langchain-ai/langgraph/issues/3115
 
