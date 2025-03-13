@@ -85,9 +85,9 @@ Multi-Agentの構成にはいくつかのパターンが存在します。
 
 
 ## 作成したアプリケーション
-広告の「キャッチコピー文」と「画像」を生成するMulti-Agentアプリケーションを実装しました。Multi-Agent構成には、複数の専門エージェントを定義することができ、拡張性の高いSupervisor型を採用しています。
+広告の「キャッチコピー文」と「画像」を生成するMulti-Agentアプリケーションを実装しました。Multi-Agentの構成として、複数の専門エージェントを定義することができ、拡張性の高いSupervisor型を採用しています。
 
-ユーザーが広告に使用する素材の作成を要望すると、Supervisorが各Sub Agent（キャッチコピー生成Agent, 画像生成Agent）を適切に呼び出し、目的に応じた広告素材を作成する仕組みとなっています。
+本アプリケーションは，ユーザーが広告に使用する素材の作成を要望すると、Supervisorが各Sub Agent（キャッチコピー生成Agent, 画像生成Agent）を適切に呼び出し、目的に応じた広告素材を作成する仕組みとなっています。
 
 ![output.gif](https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/2840684/da05a46d-f5e3-4be3-a997-ad38a3a66df1.gif)
 
@@ -106,13 +106,35 @@ WorkflowとMulti-Agentの両方のメリットを享受するため、Multi-Agen
 - tool use(@tool) + handoff(Command): 実行すべきAgentを選択し、そのAgentへ実行制御と必要情報を引き継ぐ機能
 
 :::note info
-Supervisor型のMulti-Agentを実装する際、ユーザーが入力したプロンプトからSub Agentへ渡すべき必要な情報をどのように抽出し、伝達するかが課題でした。
+Supervisor型のMulti-Agentを実装する際、ユーザーが入力したプロンプトからSub Agentへ渡すべき情報をどのように抽出し、伝達するかが課題でした。例えば，広告のキャッチコピー文を生成するAgentic Workflow（Sub Agent）の実行において，「どのようなテーマでコピー文を生成するか」という情報が必要です。しかし，ユーザーのプロンプトは必ずしもテーマのみが含まれているわけではなく，以下のようなケースが考えられます．
 
-この課題に対し、LangGraphの機能を様々調査・検証した結果、@toolデコレータとhandoff(Command)を組み合わせた手法が有効であると考えました。具体的には、Supervisor側でユーザープロンプトを受け取り、Workflowの最初のノードの実行に必要な情報（引数）を生成するツールを定義します。このツールは@toolを用いて実装され、内部でCommandオブジェクトを返すことでハンドオフを実現します。
+- (1) 広告のテーマ以外にも様々な要望などの情報が含まれるケース
+- (2) ユーザーの入力が不完全で，テーマが含まれないケース
 
-この仕組みでは、ユーザープロンプトから必要な情報だけを正確に抽出し、Stateを介してSub Agentに引き渡すことが可能となります。
+(1)の場合には，テーマのみを抽出する必要があり，(2)の場合には，ユーザーに（Agentic Workflowの実行に必要な）テーマを入力するよう依頼する必要があります．
 
-なお、tool useを利用したエージェント間でのハンドオフの実装例は、LangGraphのドキュメント[How to implement handoffs between agents](https://langchain-ai.github.io/langgraph/how-tos/agent-handoffs/)を参考にしています。
+この課題に対し、LangGraphの機能を調査・検証した結果、@toolデコレータとhandoff(Command)を組み合わせた手法が有効であると考えました。具体的には，@toolデコレータを利用してAgentic Workflowを実行するためのツールを定義します．その際，ツールの引数として，Workflowの最初のノードの実行に必要な情報を設定し，ツールの説明には，Agentic Workflowの説明を詳細に記述します．これにより，ユーザーのプロンプトから必要な情報だけを正確に抽出することが可能となり，ユーザーの入力が不完全な場合には，ユーザーに再入力を促すことができます．
+
+```python
+# handoff用のツールの簡易実装例
+from langgraph.types import Command
+
+@tool
+def handoff_to_copy_generator(
+    theme_copy: Annotated[str, "コピーのテーマ"] # ツールの引数として，Workflowの実行に必要な情報を設定
+    ) -> Command:
+    """subagentの説明"""
+    return Command(
+        goto="copy_generator_subgraph", # Supervisorが次に実行すべきSub Agent
+        update={"theme_copy": theme_copy}, # Workflowの最初のノードでは，state["theme_copy"]を利用してコピー文を生成する
+    )
+```
+
+また，ツールの返り値としてCommandオブジェクトを返すように設定します．Commandとは，LangGraphのノード内で次に実行するノード（Sub Agent）の指定や，AgentのStateの更新を同時に行う機能です．Commandオブジェクトには，次に実行すべきSub Agentと，Sub Agentの実行に必要な情報（引数）を設定します．これにより，Supervisorがユーザーのプロンプトから抽出した情報（生成された引数）をSub Agentに引き渡し，Sub Agentを実行（handoff）することが可能となります．なお，SupervisorとSub Agentの情報の連携はStateを介して行います．
+
+以上の仕組みにより、ユーザーのプロンプトから，次に実行すべきSub Agentの決定と，Sub Agentの実行に必要な情報の抽出が可能になります．
+
+tool useを利用したエージェント間でのハンドオフの実装は、LangGraphのドキュメント[How to implement handoffs between agents](https://langchain-ai.github.io/langgraph/how-tos/agent-handoffs/)を参考にしています。
 :::
 
 ### LangGraphのグラフ構造
