@@ -290,11 +290,11 @@ https://langchain-ai.github.io/langgraph/how-tos/subgraph/
 Sub Agentのグラフの代表例として、CopyGeneratorのSubGraphについて説明します。
 CopyGeneratorは、キャッチコピーの生成を行うノード（`generate_copy`）とコピーの改善を行うノード（`refine_copy`）を定義したAgentic Workflowです。
 
-このSubGraphは単純な直線的な構造で、generate_copyからrefine_copyへと順番に処理を進めます。
+このSubGraphは単純な直列的な構造で、generate_copyからrefine_copyへと順番に処理を進めます。
 
 :::note info
 
-最終的にSupervisorに制御が移るように、以下のようにSupervisorのグラフ内で定義しています。
+最終的にSupervisorに制御が移るように、以下のようにSupervisorのグラフ内でエッジを定義しています。
 
 ```python
 graph_builder.add_edge("copy_generator_subgraph", "supervisor")
