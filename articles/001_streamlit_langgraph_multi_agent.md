@@ -100,12 +100,12 @@ https://github.com/yamato0811/streamlit-langgraph-multi-agent.git
 ### WorkflowをMulti-Agentで利用するアイデア
 WorkflowとMulti-Agentの両方のメリットを享受するため、Multi-Agentの各Agent（Sub Agent）としてAgentic Workflowを利用しました。これにより、ユーザーの要望を基に実行すべきWorkflowを柔軟に選択しつつ、決定的な実行順序で正確なタスク実行が可能となります。
 
-<img src="https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/2840684/89f30d72-1878-4524-89ea-638d333646ae.png" width="600">
+<img src="https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/2840684/4fd5a4bd-14ba-44ad-8ab9-9571fa1383cb.png" width="600">
 
 上記のアイデアを実現するために、LangGraphの以下の機能を利用しています。
 
 - SubGraph: グラフ（Agentic Workflow, Agent）をノードとして利用する機能
-- tool use(@tool) + handoff(Command): 実行すべきAgentを選択し、そのAgentへ実行制御と必要情報を引き継ぐ機能
+- tool use(`@tool`) + handoff(Command): 実行すべきAgentを選択し、そのAgentへ実行制御と必要情報を引き継ぐ機能
 
 :::note info
 Supervisor型のMulti-Agentを実装する際、ユーザーが入力したプロンプトからSub Agentへ渡すべき情報をどのように抽出し、伝達するかが課題でした。例えば、広告のキャッチコピー文を生成するAgentic Workflow（Sub Agent）の実行において、「どのようなテーマでコピー文を生成するか」という情報が必要です。しかし、ユーザーのプロンプトは必ずしもテーマのみが含まれているわけではなく、以下のようなケースが考えられます。
