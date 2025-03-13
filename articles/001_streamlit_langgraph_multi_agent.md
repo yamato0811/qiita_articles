@@ -114,7 +114,7 @@ Supervisor型のMulti-Agentを実装する際、ユーザーが入力したプ�
 
 この課題に対し、LangGraphの機能を様々調査・検証した結果、@toolデコレータとhandoff(Command)を組み合わせた手法が有効であると考えました。具体的には、Supervisor側でユーザープロンプトを受け取り、Workflowの最初のノードの実行に必要な情報（引数）を生成するツールを定義します。このツールは@toolを用いて実装され、内部でCommandオブジェクトを返すことでハンドオフを実現します。
 
-この仕組みでは、stateを介して情報が伝達されるため、ユーザープロンプトから必要な情報だけを正確に抽出し、Sub Agentに引き渡すことが可能となります。
+この仕組みでは、ユーザープロンプトから必要な情報だけを正確に抽出し、Stateを介してSub Agentに引き渡すことが可能となります。
 
 なお、tool useを利用したエージェント間でのハンドオフの実装例は、LangGraphのドキュメント[How to implement handoffs between agents](https://langchain-ai.github.io/langgraph/how-tos/agent-handoffs/)を参考にしています。
 :::
