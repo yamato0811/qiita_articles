@@ -9,21 +9,19 @@ https://speakerdeck.com/ren8k/langgraph-bedrock-supervisor-agent
 ## はじめに
 株式会社NTTデータ デジタルサクセスコンサルティング事業部の[@yamato0811](https://qiita.com/yamato0811), [@ren8k](https://qiita.com/ren8k)です。
 
-本記事では、LangGraphとAmazon Bedrockを利用し、「**Agentic WorkflowをSupervisor型のMulti-Agentで利用する**」というアイデアを採用してアプリケーションを実装した事例をご紹介します。Agentic Workflowの強みである「決定的なタスク実行」と、Agent（ReAct）の強みである「柔軟な対応力」を両立させることで、より幅広い用途に使用可能なAI Agentを実現しました。
+昨今、AI Agentの開発が活発化しており、幅広い分野のタスクに対応するために、Multi-Agentの実装が求められています。Multi-Agentの実装には、LangGraphやAmazon Bedrock Agentなどのフレームワークが利用されることが多いですが、その実装方法についてはまだ十分な情報が共有されていません。また、Agentic WorkflowをMulti-Agentに組み込む方法などは、執筆時点（2025/03/12）ではほぼ情報がありません。（我々も実装にあたっては数多くの試行錯誤を重ねてきました。）
 
-具体的には、広告素材（コピー文、画像）作成アプリケーションを例に、複数のAgentic Workflowを組み合わせて構成したMulti-Agent実装のポイントや、開発を進める中で得られた知見をお伝えします。特に、LangGraphでMulti-Agentを実装する事例は少なく、実装にあたっては数多くの試行錯誤を重ねてきました。実装を通じて得られた技術的なポイントや工夫点を、Pythonのコード例とともに解説しますので、同様の実装に取り組まれている方の参考になれば幸いです。
+本記事では、LangGraphを利用した、**複数のAgentic Workflowを利用したSupervisor型のMulti-Agentの実現方法**について解説します。特に、Agentic Workflowの強みである「決定的なタスクの実行」と、Agent（ReAct）の強みである「柔軟な対応力」を両立させることで、より幅広い用途に使用可能なAI Agentを実現できることを示します。
+
+また、広告素材（コピー文、画像）作成アプリケーションを題材とし、LangGraphでMulti-Agentを実装する際のポイントや工夫点を、Pythonのコード例とともに解説します。特に、Sub Agentの定義方法や、Agent間の制御の委譲方法（handoff）について、実装上の工夫点を解説します。なお、実装にあたり、利用しているLLMや画像生成AIはAmazon Bedrockを利用しています。
 
 解説用に実装した簡易アプリケーションのリポジトリは、以下のリンクからご確認いただけます。
 
 https://github.com/yamato0811/streamlit-langgraph-multi-agent.git
 
-また、StreamlitとLangGraphで実装したHuman-in-the-loop Agentic Workflowについて解説した記事を、以前に執筆しました。まだご覧になっていない方は、そちらを合わせてお読みいただくとより理解が深まるかと思います！
+※ 以前、StreamlitとLangGraphで実装したHuman-in-the-loop Agentic Workflowについて解説した記事を執筆しました。まだご覧になっていない方は、そちらを合わせてお読みいただくとより理解が深まるかと思います！
 
 https://qiita.com/yamato0811/items/02688690a85a670b773f
-
-本内容は、弊社でのAWS Japan生成AI実用化推進プログラムでの取り組みの一環です。プログラムにおける取り組み内容は、以下のnoteにて外部発信していますのでぜひご覧ください！
-
-https://note.com/digitalsuccess/n/n958487f4d1cf
 
 
 ## 想定読者
@@ -89,9 +87,9 @@ Multi-Agentの構成にはいくつかのパターンが存在します。
 
 
 ## 作成したアプリケーション
-広告の「キャッチコピー文」と「画像」を生成するMulti-Agentアプリケーションを実装しました。Multi-Agent構成には、複数の専門エージェントを定義することができ、拡張性の高いSupervisor型を採用しています。
+広告の「キャッチコピー文」と「画像」を生成するMulti-Agentアプリケーションを実装しました。Multi-Agentの構成として、複数の専門エージェントを定義することができ、拡張性の高いSupervisor型を採用しています。
 
-ユーザーが広告に使用する素材の作成を要望すると、Supervisorが各Sub Agent（キャッチコピー生成Agent, 画像生成Agent）を適切に呼び出し、目的に応じた広告素材を作成する仕組みとなっています。
+本アプリケーションは、ユーザーが広告に使用する素材の作成を要望すると、Supervisorが各Sub Agent（キャッチコピー生成Agent, 画像生成Agent）を適切に呼び出し、目的に応じた広告素材を作成する仕組みとなっています。
 
 ![output.gif](https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/2840684/da05a46d-f5e3-4be3-a997-ad38a3a66df1.gif)
 
@@ -110,13 +108,35 @@ WorkflowとMulti-Agentの両方のメリットを享受するため、Multi-Agen
 - tool use(@tool) + handoff(Command): 実行すべきAgentを選択し、そのAgentへ実行制御と必要情報を引き継ぐ機能
 
 :::note info
-Supervisor型のMulti-Agentを実装する際、ユーザーが入力したプロンプトからSub Agentへ渡すべき必要な情報をどのように抽出し、伝達するかが課題でした。
+Supervisor型のMulti-Agentを実装する際、ユーザーが入力したプロンプトからSub Agentへ渡すべき情報をどのように抽出し、伝達するかが課題でした。例えば、広告のキャッチコピー文を生成するAgentic Workflow（Sub Agent）の実行において、「どのようなテーマでコピー文を生成するか」という情報が必要です。しかし、ユーザーのプロンプトは必ずしもテーマのみが含まれているわけではなく、以下のようなケースが考えられます。
 
-この課題に対し、LangGraphの機能を様々調査・検証した結果、@toolデコレータとhandoff(Command)を組み合わせた手法が有効であると考えました。具体的には、Supervisor側でユーザープロンプトを受け取り、Workflowの最初のノードの実行に必要な情報（引数）を生成するツールを定義します。このツールは@toolを用いて実装され、内部でCommandオブジェクトを返すことでハンドオフを実現します。
+- (1) 広告のテーマ以外にも様々な要望などの情報が含まれるケース
+- (2) ユーザーの入力が不完全で、テーマが含まれないケース
 
-この仕組みでは、ユーザープロンプトから必要な情報だけを正確に抽出し、Stateを介してSub Agentに引き渡すことが可能となります。
+(1)の場合には、テーマのみを抽出する必要があり、(2)の場合には、ユーザーに（Agentic Workflowの実行に必要な）テーマを入力するよう依頼する必要があります。
 
-なお、tool useを利用したエージェント間でのハンドオフの実装例は、LangGraphのドキュメント[How to implement handoffs between agents](https://langchain-ai.github.io/langgraph/how-tos/agent-handoffs/)を参考にしています。
+この課題に対し、LangGraphの機能を調査・検証した結果、@toolデコレータとhandoff(Command)を組み合わせた手法が有効であると考えました。具体的には、@toolデコレータを利用してAgentic Workflowを実行するためのツールを定義します。その際、ツールの引数として、Workflowの最初のノードの実行に必要な情報を設定し、ツールの説明には、Agentic Workflowの説明を詳細に記述します。これにより、ユーザーのプロンプトから必要な情報だけを正確に抽出することが可能となり、ユーザーの入力が不完全な場合には、ユーザーに再入力を促すことができます。
+
+```python
+# handoff用のツールの簡易実装例
+from langgraph.types import Command
+
+@tool
+def handoff_to_copy_generator(
+    theme_copy: Annotated[str, "コピーのテーマ"] # ツールの引数として、Workflowの実行に必要な情報を設定
+    ) -> Command:
+    """subagentの説明"""
+    return Command(
+        goto="copy_generator_subgraph", # Supervisorが次に実行すべきSub Agent
+        update={"theme_copy": theme_copy}, # Workflowの最初のノードでは、state["theme_copy"]を利用してコピー文を生成する
+    )
+```
+
+また、ツールの返り値としてCommandオブジェクトを返すように設定します。Commandとは、LangGraphのノード内で次に実行するノード（Sub Agent）の指定や、AgentのStateの更新を同時に行う機能です。Commandオブジェクトには、次に実行すべきSub Agentと、Sub Agentの実行に必要な情報（引数）を設定します。これにより、Supervisorがユーザーのプロンプトから抽出した情報（生成された引数）をSub Agentに引き渡し、Sub Agentを実行（handoff）することが可能となります。なお、SupervisorとSub Agentの情報の連携はStateを介して行います。
+
+以上の仕組みにより、ユーザーのプロンプトから、次に実行すべきSub Agentの決定と、Sub Agentの実行に必要な情報の抽出が可能になります。
+
+tool useを利用したエージェント間でのハンドオフの実装は、LangGraphのドキュメント[How to implement handoffs between agents](https://langchain-ai.github.io/langgraph/how-tos/agent-handoffs/)を参考にしています。
 :::
 
 ### LangGraphのグラフ構造
@@ -689,7 +709,7 @@ def display_message(message: dict) -> None:
 ```
 
 ## 苦労した点
-Sub Agent（サブグラフ）内のエッジの定義に`Command`を利用すると、期待した挙動とならない不具合（バグ）が発生しました。具体的には、同一のWorkflowを定義しているにもかかわらず、`Command`を利用した場合と`add_edge`を利用した場合のグラフで、以下のように挙動が異なっております。
+Sub Agent（サブグラフ）内のエッジの定義に`Command`を利用すると、期待した挙動とならない不具合（バグ）が発生しました。具体的には、同一のWorkflowを定義しているにもかかわらず、`Command`を利用した場合と`add_edge`を利用した場合のグラフで、以下に示すように挙動が異なっております。
 
 :::note info
 基本的に、`Command`は`add_edge`で代替することが可能です。しかし、ツール（`@tool`でデコレートしたhandoff用の関数）の実行結果に応じて、次に実行するサブグラフを動的に決定したり、異なるStateを更新する場合、`Command`を利用しなければ実装が非常に複雑になってしまいます。
@@ -871,8 +891,11 @@ https://github.com/langchain-ai/langgraph/issues/3115
 https://github.com/langchain-ai/langgraph/issues/3362
 
 ## まとめ
-本記事では、LangGraphとAmazon Bedrockを活用し、Agentic WorkflowとSupervisor型Multi-Agentを組み合わせた広告素材生成アプリケーションの実装事例をご紹介しました。
-まだMulti-Agentの実装事例は少なく、実装方法が不明瞭な部分も多い中で、本記事のサンプル実装が何らかの指針として参考になれば幸いです。
+本記事では、LangGraphとAmazon Bedrockを利用し、Supervisor型のMulti-Agentシステムで、複数のAgentic WorkflowをSub Agentとして利用する方法を解説しました。また、LangGraphで、Agentic WorkflowをSub Agentとして利用するための機能であるSubGraphと、Agent間で制御を委譲する機能であるhandoffについて解説しました。執筆時点（2025/03/12）において、Multi-Agentの実装事例は少なく、実装方法が不明瞭な部分も多い中で、本記事が参考になれば幸いです。
+
+本記事の内容は、弊社でのAWS Japan生成AI実用化推進プログラムでの取り組みの一環です。プログラムにおける取り組み内容は、以下のnoteにて外部発信していますのでぜひご覧ください！
+
+https://note.com/digitalsuccess/n/n958487f4d1cf
 
 ## 仲間募集
 NTTデータ テクノロジーコンサルティング事業本部 では、以下の職種を募集しています。
