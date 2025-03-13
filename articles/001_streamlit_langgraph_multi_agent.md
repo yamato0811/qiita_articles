@@ -9,11 +9,11 @@ https://speakerdeck.com/ren8k/langgraph-bedrock-supervisor-agent
 ## はじめに
 株式会社NTTデータ デジタルサクセスコンサルティング事業部の[@yamato0811](https://qiita.com/yamato0811), [@ren8k](https://qiita.com/ren8k)です。
 
-昨今、AI Agentの開発が活発化しており、幅広い分野のタスクに対応するために、Multi-Agentの実装が求められています。Multi-Agentの実装には、LangGraphやAmazon Bedrock Agentなどのフレームワークが利用されることが多いですが、その実装方法についてはまだ十分な情報が共有されていません。また、Agentic WorkflowをMulti-Agentに組み込む方法などは、執筆時点（2025/03/12）ではほぼ情報がありません。（我々も実装にあたっては数多くの試行錯誤を重ねてきました。）
+昨今、AI Agentの開発が活発化しており、幅広い分野のタスクに対応するために、Multi-Agentの実装が求められています。Multi-Agentの実装には、LangGraphやAmazon Bedrock Agentなどのフレームワークが利用されることが多いですが、その実装方法についてはまだ十分な情報が共有されていません。また、Agentic WorkflowをMulti-Agentに組み込む方法などは、執筆時点（2025/03/12）ではほぼ情報がありません。我々もMulti-Agentを実装するにあたり、ネット上の情報や実装例が少なく、数多くの試行錯誤を重ねました。
 
 本記事では、LangGraphを利用した、**複数のAgentic Workflowを利用したSupervisor型のMulti-Agentの実現方法**について解説します。特に、Agentic Workflowの強みである「決定的なタスクの実行」と、Agent（ReAct）の強みである「柔軟な対応力」を両立させることで、より幅広い用途に使用可能なAI Agentを実現できることを示します。
 
-また、広告素材（コピー文、画像）作成アプリケーションを題材とし、LangGraphでMulti-Agentを実装する際のポイントや工夫点を、Pythonのコード例とともに解説します。特に、Sub Agentの定義方法や、Agent間の制御の委譲方法（handoff）について、実装上の工夫点を解説します。なお、実装にあたり、利用しているLLMや画像生成AIはAmazon Bedrockを利用しています。
+また、広告素材（コピー文、画像）作成アプリケーションを題材とし、LangGraphでMulti-Agentを実装する際のポイントや工夫点を、Pythonのコード例とともに解説します。特に、Sub Agentの定義方法や、Agent間の制御の委譲方法（handoff）について、実装上の工夫点を解説します。なお、実装にあたり、利用しているLLMや画像生成AIにはAmazon Bedrockを利用しています。
 
 解説用に実装した簡易アプリケーションのリポジトリは、以下のリンクからご確認いただけます。
 
@@ -108,14 +108,14 @@ WorkflowとMulti-Agentの両方のメリットを享受するため、Multi-Agen
 - tool use(`@tool`) + handoff(Command): 実行すべきAgentを選択し、そのAgentへ実行制御と必要情報を引き継ぐ機能
 
 :::note info
-Supervisor型のMulti-Agentを実装する際、ユーザーが入力したプロンプトからSub Agentへ渡すべき情報をどのように抽出し、伝達するかが課題でした。例えば、広告のキャッチコピー文を生成するAgentic Workflow（Sub Agent）の実行において、「どのようなテーマでコピー文を生成するか」という情報が必要です。しかし、ユーザーのプロンプトは必ずしもテーマのみが含まれているわけではなく、以下のようなケースが考えられます。
+Supervisor型のMulti-Agentを実装する際、ユーザーが入力したプロンプトからSub Agentへ渡すべき情報をどのように抽出し、伝達するかが課題でした。例えば、広告のキャッチコピー文を生成するAgentic Workflow（Sub Agent）の実行において、「どのようなテーマでコピー文を生成するか」という情報が必要です。しかし、ユーザーのプロンプトには必ずしもテーマのみが含まれるわけではなく、以下のようなケースが考えられます。
 
 - (1) 広告のテーマ以外にも様々な要望などの情報が含まれるケース
 - (2) ユーザーの入力が不完全で、テーマが含まれないケース
 
-(1)の場合には、テーマのみを抽出する必要があり、(2)の場合には、ユーザーに（Agentic Workflowの実行に必要な）テーマを入力するよう依頼する必要があります。
+(1)の場合には、テーマのみを抽出する必要があり、(2)の場合には、ユーザーに（Sub Agentの実行に必要な）テーマを入力するよう依頼する必要があります。
 
-この課題に対し、LangGraphの機能を調査・検証した結果、@toolデコレータとhandoff(Command)を組み合わせた手法が有効であると考えました。具体的には、@toolデコレータを利用してAgentic Workflowを実行するためのツールを定義します。その際、ツールの引数として、Workflowの最初のノードの実行に必要な情報を設定し、ツールの説明には、Agentic Workflowの説明を詳細に記述します。これにより、ユーザーのプロンプトから必要な情報だけを正確に抽出することが可能となり、ユーザーの入力が不完全な場合には、ユーザーに再入力を促すことができます。
+この課題に対し、LangGraphの機能を調査・検証した結果、@toolデコレータとhandoff(Command)を組み合わせた手法が有効であると考えました。具体的には、@toolデコレータを利用してAgentic Workflow（Sub Agent）を実行するためのツールを定義します。その際、ツールの引数として、Agentic Workflowの最初のノードの実行に必要な情報を設定し、ツールの説明には、Agentic Workflowの説明を記述します。これにより、ユーザーのプロンプトから必要な情報だけを正確に抽出することが可能となり、ユーザーの入力が不完全な場合には、ユーザーに再入力を促すことができます。
 
 ```python
 # handoff用のツールの簡易実装例
@@ -125,14 +125,14 @@ from langgraph.types import Command
 def handoff_to_copy_generator(
     theme_copy: Annotated[str, "コピーのテーマ"] # ツールの引数として、Workflowの実行に必要な情報を設定
     ) -> Command:
-    """subagentの説明"""
+    """Agentic Workflow（Sub Agent）の説明"""
     return Command(
-        goto="copy_generator_subgraph", # Supervisorが次に実行すべきSub Agent
+        goto="copy_generator_subgraph", # Supervisorが次に実行すべきノード（Sub Agent）
         update={"theme_copy": theme_copy}, # Workflowの最初のノードでは、state["theme_copy"]を利用してコピー文を生成する
     )
 ```
 
-また、ツールの返り値としてCommandオブジェクトを返すように設定します。Commandとは、LangGraphのノード内で次に実行するノード（Sub Agent）の指定や、AgentのStateの更新を同時に行う機能です。Commandオブジェクトには、次に実行すべきSub Agentと、Sub Agentの実行に必要な情報（引数）を設定します。これにより、Supervisorがユーザーのプロンプトから抽出した情報（生成された引数）をSub Agentに引き渡し、Sub Agentを実行（handoff）することが可能となります。なお、SupervisorとSub Agentの情報の連携はStateを介して行います。
+また、ツールの返り値としてCommandオブジェクトを返すように設定します。Commandとは、LangGraphのノード内で次に実行するノードの指定や、AgentのStateの更新を同時に行う機能です。Commandオブジェクトには、次に実行すべきSub Agentと、Sub Agentの実行に必要な情報（引数）を設定します。これにより、Supervisorがユーザーのプロンプトから抽出した情報（生成された引数）をSub Agentに引き渡し、Sub Agentを実行（handoff）することが可能となります。なお、SupervisorとSub Agentの情報の連携はStateを介して行います。
 
 以上の仕組みにより、ユーザーのプロンプトから、次に実行すべきSub Agentの決定と、Sub Agentの実行に必要な情報の抽出が可能になります。
 
@@ -236,7 +236,7 @@ Workflowで構成した各Sub Agentを階層的に管理するため、SubGraph�
 すでにコンパイル済みのグラフ（`copy_generator`や`image_generator`）を直接ノードとして`add_node`することで、Agentic Workflowをサブグラフとして利用することができます。
 
 :::note warn
-ツールとして、handoffによりサブエージェントに制御を譲渡するための関数（`handoff_to_copy_generator`や`handoff_to_image_generator`）を定義しています。これら解説については、後述の[セクション](#handoffcommand)で詳しく行います。
+ツールとして、handoffによりSub Agentに制御を委譲する（Sub Agentを実行する）ための関数（`handoff_to_copy_generator`や`handoff_to_image_generator`）を定義しています。これら解説については、後述の[セクション](#handoffcommand)で詳しく行います。
 :::
 
 ```python: agent/supervisor.py
@@ -290,11 +290,11 @@ https://langchain-ai.github.io/langgraph/how-tos/subgraph/
 Sub Agentのグラフの代表例として、CopyGeneratorのSubGraphについて説明します。
 CopyGeneratorは、キャッチコピーの生成を行うノード（`generate_copy`）とコピーの改善を行うノード（`refine_copy`）を定義したAgentic Workflowです。
 
-このSubGraphは単純な直線的な構造で、generate_copyからrefine_copyへと順番に処理を進めます。
+このSubGraphは単純な直列的な構造で、generate_copyからrefine_copyへと順番に処理を進めます。
 
 :::note info
 
-最終的にSupervisorに制御が移るように、以下のようにSupervisorのグラフ内で定義しています。
+最終的にSupervisorに制御が移るように、以下のようにSupervisorのグラフ内でエッジを定義しています。
 
 ```python
 graph_builder.add_edge("copy_generator_subgraph", "supervisor")
@@ -328,7 +328,7 @@ class CopyGenerator:
 
 CopyGeneratorの各ノードの処理関数は以下のように記載しています。
 
-`generate_copy()`では、Supervisorから受け取ったコピーのテーマ`state['theme_copy']`を基にLLMを実行し、キャッチコピーを生成します。生成結果は`draft_copy`として返します。`refine_copy()`では、`generate_copy()`で生成した`draft_copy`を受け取り、LLM実行により改善したコピーを返します。
+`generate_copy()`では、Supervisorから受け取ったコピーのテーマ`state['theme_copy']`を基にLLMを実行し、キャッチコピーを生成します。生成結果は`draft_copy`として返します。`refine_copy()`では、`generate_copy()`で生成した`draft_copy`を受け取り、LLMの実行により改善したコピーを返します。
 
 また、`display_message_dict`には、Streamlitに表示するためのメッセージを格納しています。
 
@@ -405,9 +405,9 @@ CopyGeneratorの各ノードの処理関数は以下のように記載してい�
 handoffは、あるAgentが別のAgentに制御を渡す考え方のことで、LangGraphのCommandという機能を利用して実現する事ができます。
 
 #### Supervisorの処理関数の実装
-Supervisorの`supervisor()`関数では、tool useとhandoffを使用して、Supervisor Agentが他のサブエージェントに処理を委譲する（サブエージェントをツールとして呼び出す）仕組みを実装しています。
+Supervisorの`supervisor()`関数では、tool useとhandoff（Command）を使用して、Supervisor Agentが他のSub Agentに処理を委譲する（Sub Agentをツールとして呼び出す）仕組みを実装しています。
 
-まず、Supervisorは、過去の会話履歴とユーザーからの指示に基づき、次にどのサブエージェント（ツール）を利用すべきかを判断します。その際、応答（`response`）は会話のコンテキストとして`state["messages"]`に追加しています。
+まず、Supervisorは、過去の会話履歴とユーザーからの指示に基づき、次にどのSub Agent（ツール）を利用すべきかを判断します。その際、応答（`response`）は会話のコンテキストとして`state["messages"]`に追加しています。
 
 ```python: agent/supervisor.py
 def supervisor(self, state: AgentState) -> Command[
@@ -458,7 +458,7 @@ def supervisor(self, state: AgentState) -> Command[
             invoke_result = json.loads(tool_response.content)
 ```
 
-ツール呼び出しの結果から得られた`goto`と`update`を使い、Commandオブジェクトを返します。これにより、処理は次のサブエージェント（`goto`に格納されている`copy_generator_subgraph`や`image_generator_subgraph`）へ移譲されます。
+ツール呼び出しの結果から得られた`goto`と`update`を使い、Commandオブジェクトを返します。これにより、処理は次のSub Agent（`goto`に格納されている`copy_generator_subgraph`や`image_generator_subgraph`）へ移譲されます。
 
 ```python: agent/supervisor.py
         # for bedrock
@@ -509,11 +509,11 @@ https://langchain-ai.github.io/langgraph/how-tos/command/
 #### toolの定義
 Supervisorで利用するtoolは以下のように定義しています。`@tool`でデコレートしたhandoff用の関数（ツール）をSupervisorが呼び出すことで、以下の情報を取得可能です。
 
-- 次に実行すべきサブエージェント（Workflow）のノード名（`copy_generator_subgraph`）
+- 次に実行すべきSub Agent（Workflow）のノード名（`copy_generator_subgraph`）
 - ツールメッセージ（`[tool_msg]`）
 - Workflowの実行に必要なStateの情報（tool useによって生成されたツールの引数 `theme_copy`）
 
-その後、SupervisorのCommandオブジェクト内で、上記の情報をそれぞれ引数`goto`と`update`に指定してreturnで返しています。この結果、Supervisorはtool useで（間接的に）Sub Agentを呼び出し、同時にtool useでWorkflowの実行に必要なStateの情報も生成しています。
+その後、SupervisorのCommandオブジェクト内で、上記の情報をそれぞれ引数`goto`と`update`に指定してreturnで返しています。この結果、**Supervisorはtool useで（間接的に）Sub Agentを呼び出し、同時にtool useでWorkflowの実行に必要なStateの情報も生成**しています。
 
 なお、LLMでツール呼び出しを行った際には会話履歴にtool messageを含める必要があるため、toolの返り値の要素の`messages`に`tool_msg`を追加している点には注意してください。
 
@@ -585,7 +585,7 @@ def handoff_to_image_generator(
 ```
 
 :::note info
-ツール引数以外の値を関数に渡したい場合は、`InjectedToolCallId`のような`InjectedArg`の注釈を付与します。`InjectedArg`の注釈が付与されたパラメータは、tool use時にLLMに認識されなくなり、引数として生成されなくなります。
+ツールの引数以外の値を関数に渡したい場合は、`InjectedToolCallId`のような`InjectedArg`の注釈を付与します。`InjectedArg`の注釈が付与されたパラメータは、tool use時にLLMに認識されなくなり、ツールの引数として生成されなくなります。
 
 https://langchain-ai.github.io/langgraph/how-tos/pass-run-time-values-to-tools/
 :::
@@ -712,7 +712,7 @@ def display_message(message: dict) -> None:
 Sub Agent（サブグラフ）内のエッジの定義に`Command`を利用すると、期待した挙動とならない不具合（バグ）が発生しました。具体的には、同一のWorkflowを定義しているにもかかわらず、`Command`を利用した場合と`add_edge`を利用した場合のグラフで、以下に示すように挙動が異なっております。
 
 :::note info
-基本的に、`Command`は`add_edge`で代替することが可能です。しかし、ツール（`@tool`でデコレートしたhandoff用の関数）の実行結果に応じて、次に実行するサブグラフを動的に決定したり、異なるStateを更新する場合、`Command`を利用しなければ実装が非常に複雑になってしまいます。
+基本的に、`Command`は`add_edge`で代替することが可能です。しかし、ツール（`@tool`でデコレートしたhandoff用の関数）の実行結果に応じて、次に実行するサブグラフを動的に決定したり、異なるStateの要素を更新する場合、`Command`を利用しなければ実装が非常に複雑になってしまいます。
 :::
 
 <details><summary>Commandを利用する場合</summary>
@@ -877,7 +877,7 @@ for chunk in main_graph.stream(initial, stream_mode="values", subgraphs=True):
 ```
 </details>
 
-`Command`は当時リリースされた直後で、Issueなどにも本事象は報告されておらず、何が原因で想定通りの挙動にならないのかが不明でした。そこで、`Command`について、ドキュメントで仕様を調査し、`add_edge`を利用した場合の実行結果と比較することで、以下の点が不具合の原因であると確認しました。また、以下の点は、サブグラフ特有のバグである点も確認しました。
+`Command`は当時リリースされた直後で、Issueなどにも本事象は報告されておらず、何が原因で想定通りの挙動にならないのかが不明でした。そこで、`Command`について、ドキュメントで仕様を調査し、`add_edge`を利用した場合の実行結果と比較することで、以下の2点が不具合の原因であると確認しました。また、以下の2点は、サブグラフ特有のバグである点も確認しました。
 
 - SupervisorとSub Agent間のStateの連携がなされない
 - streamメソッドの出力に、Sub Agentの最終ノードの情報が含まれない
@@ -891,7 +891,7 @@ https://github.com/langchain-ai/langgraph/issues/3115
 https://github.com/langchain-ai/langgraph/issues/3362
 
 ## まとめ
-本記事では、LangGraphとAmazon Bedrockを利用し、Supervisor型のMulti-Agentシステムで、複数のAgentic WorkflowをSub Agentとして利用する方法を解説しました。また、LangGraphで、Agentic WorkflowをSub Agentとして利用するための機能であるSubGraphと、Agent間で制御を委譲する機能であるhandoffについて解説しました。執筆時点（2025/03/12）において、Multi-Agentの実装事例は少なく、実装方法が不明瞭な部分も多い中で、本記事が参考になれば幸いです。
+本記事では、LangGraphとAmazon Bedrockを利用し、Supervisor型のMulti-Agentシステムで、複数のAgentic WorkflowをSub Agentとして利用する方法を解説しました。また、LangGraphで、Agentic WorkflowをSub Agentとして利用するための機能であるSubGraphと、Agent間で制御を委譲する機能であるhandoff（Command）について解説しました。執筆時点（2025/03/12）において、Multi-Agentの実装事例が少ない中で、本記事が参考になれば幸いです。
 
 本記事の内容は、弊社でのAWS Japan生成AI実用化推進プログラムでの取り組みの一環です。プログラムにおける取り組み内容は、以下のnoteにて外部発信していますのでぜひご覧ください！
 
