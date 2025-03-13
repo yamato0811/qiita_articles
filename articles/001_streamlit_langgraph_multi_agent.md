@@ -9,11 +9,11 @@ https://speakerdeck.com/ren8k/langgraph-bedrock-supervisor-agent
 ## はじめに
 株式会社NTTデータ デジタルサクセスコンサルティング事業部の[@yamato0811](https://qiita.com/yamato0811), [@ren8k](https://qiita.com/ren8k)です。
 
-昨今、AI Agentの開発が活発化しており、幅広い分野のタスクに対応するために、Multi-Agentの実装が求められています。Multi-Agentの実装には、LangGraphやAmazon Bedrock Agentなどのフレームワークが利用されることが多いですが、その実装方法についてはまだ十分な情報が共有されていません。また、Agentic WorkflowをMulti-Agentに組み込む方法などは、執筆時点（2025/03/12）ではほぼ情報がありません。（我々も実装にあたっては数多くの試行錯誤を重ねてきました。）
+昨今、AI Agentの開発が活発化しており、幅広い分野のタスクに対応するために、Multi-Agentの実装が求められています。Multi-Agentの実装には、LangGraphやAmazon Bedrock Agentなどのフレームワークが利用されることが多いですが、その実装方法についてはまだ十分な情報が共有されていません。また、Agentic WorkflowをMulti-Agentに組み込む方法などは、執筆時点（2025/03/12）ではほぼ情報がありません。我々もMulti-Agentを実装するにあたり、ネット上の情報や実装例が少なく、数多くの試行錯誤を重ねました。
 
 本記事では、LangGraphを利用した、**複数のAgentic Workflowを利用したSupervisor型のMulti-Agentの実現方法**について解説します。特に、Agentic Workflowの強みである「決定的なタスクの実行」と、Agent（ReAct）の強みである「柔軟な対応力」を両立させることで、より幅広い用途に使用可能なAI Agentを実現できることを示します。
 
-また、広告素材（コピー文、画像）作成アプリケーションを題材とし、LangGraphでMulti-Agentを実装する際のポイントや工夫点を、Pythonのコード例とともに解説します。特に、Sub Agentの定義方法や、Agent間の制御の委譲方法（handoff）について、実装上の工夫点を解説します。なお、実装にあたり、利用しているLLMや画像生成AIはAmazon Bedrockを利用しています。
+また、広告素材（コピー文、画像）作成アプリケーションを題材とし、LangGraphでMulti-Agentを実装する際のポイントや工夫点を、Pythonのコード例とともに解説します。特に、Sub Agentの定義方法や、Agent間の制御の委譲方法（handoff）について、実装上の工夫点を解説します。なお、実装にあたり、利用しているLLMや画像生成AIにはAmazon Bedrockを利用しています。
 
 解説用に実装した簡易アプリケーションのリポジトリは、以下のリンクからご確認いただけます。
 
