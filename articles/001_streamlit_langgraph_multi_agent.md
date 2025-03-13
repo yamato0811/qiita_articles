@@ -897,6 +897,10 @@ https://github.com/langchain-ai/langgraph/issues/3362
 
 https://note.com/digitalsuccess/n/n958487f4d1cf
 
+## 謝辞
+記事執筆にあたり、同チームの藤田さんにレビューとアドバイスをいただきました。
+この場を借りて、心より感謝申し上げます。
+
 ## 仲間募集
 NTTデータ テクノロジーコンサルティング事業本部 では、以下の職種を募集しています。
 
