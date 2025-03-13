@@ -328,7 +328,7 @@ class CopyGenerator:
 
 CopyGeneratorの各ノードの処理関数は以下のように記載しています。
 
-`generate_copy()`では、Supervisorから受け取ったコピーのテーマ`state['theme_copy']`を基にLLMを実行し、キャッチコピーを生成します。生成結果は`draft_copy`として返します。`refine_copy()`では、`generate_copy()`で生成した`draft_copy`を受け取り、LLM実行により改善したコピーを返します。
+`generate_copy()`では、Supervisorから受け取ったコピーのテーマ`state['theme_copy']`を基にLLMを実行し、キャッチコピーを生成します。生成結果は`draft_copy`として返します。`refine_copy()`では、`generate_copy()`で生成した`draft_copy`を受け取り、LLMの実行により改善したコピーを返します。
 
 また、`display_message_dict`には、Streamlitに表示するためのメッセージを格納しています。
 
@@ -405,7 +405,7 @@ CopyGeneratorの各ノードの処理関数は以下のように記載してい�
 handoffは、あるAgentが別のAgentに制御を渡す考え方のことで、LangGraphのCommandという機能を利用して実現する事ができます。
 
 #### Supervisorの処理関数の実装
-Supervisorの`supervisor()`関数では、tool useとhandoffを使用して、Supervisor Agentが他のSub Agentに処理を委譲する（Sub Agentをツールとして呼び出す）仕組みを実装しています。
+Supervisorの`supervisor()`関数では、tool useとhandoff（Command）を使用して、Supervisor Agentが他のSub Agentに処理を委譲する（Sub Agentをツールとして呼び出す）仕組みを実装しています。
 
 まず、Supervisorは、過去の会話履歴とユーザーからの指示に基づき、次にどのSub Agent（ツール）を利用すべきかを判断します。その際、応答（`response`）は会話のコンテキストとして`state["messages"]`に追加しています。
 
@@ -513,7 +513,7 @@ Supervisorで利用するtoolは以下のように定義しています。`@tool
 - ツールメッセージ（`[tool_msg]`）
 - Workflowの実行に必要なStateの情報（tool useによって生成されたツールの引数 `theme_copy`）
 
-その後、SupervisorのCommandオブジェクト内で、上記の情報をそれぞれ引数`goto`と`update`に指定してreturnで返しています。この結果、Supervisorはtool useで（間接的に）Sub Agentを呼び出し、同時にtool useでWorkflowの実行に必要なStateの情報も生成しています。
+その後、SupervisorのCommandオブジェクト内で、上記の情報をそれぞれ引数`goto`と`update`に指定してreturnで返しています。この結果、**Supervisorはtool useで（間接的に）Sub Agentを呼び出し、同時にtool useでWorkflowの実行に必要なStateの情報も生成**しています。
 
 なお、LLMでツール呼び出しを行った際には会話履歴にtool messageを含める必要があるため、toolの返り値の要素の`messages`に`tool_msg`を追加している点には注意してください。
 
@@ -585,7 +585,7 @@ def handoff_to_image_generator(
 ```
 
 :::note info
-ツール引数以外の値を関数に渡したい場合は、`InjectedToolCallId`のような`InjectedArg`の注釈を付与します。`InjectedArg`の注釈が付与されたパラメータは、tool use時にLLMに認識されなくなり、引数として生成されなくなります。
+ツールの引数以外の値を関数に渡したい場合は、`InjectedToolCallId`のような`InjectedArg`の注釈を付与します。`InjectedArg`の注釈が付与されたパラメータは、tool use時にLLMに認識されなくなり、ツールの引数として生成されなくなります。
 
 https://langchain-ai.github.io/langgraph/how-tos/pass-run-time-values-to-tools/
 :::
@@ -712,7 +712,7 @@ def display_message(message: dict) -> None:
 Sub Agent（サブグラフ）内のエッジの定義に`Command`を利用すると、期待した挙動とならない不具合（バグ）が発生しました。具体的には、同一のWorkflowを定義しているにもかかわらず、`Command`を利用した場合と`add_edge`を利用した場合のグラフで、以下に示すように挙動が異なっております。
 
 :::note info
-基本的に、`Command`は`add_edge`で代替することが可能です。しかし、ツール（`@tool`でデコレートしたhandoff用の関数）の実行結果に応じて、次に実行するサブグラフを動的に決定したり、異なるStateを更新する場合、`Command`を利用しなければ実装が非常に複雑になってしまいます。
+基本的に、`Command`は`add_edge`で代替することが可能です。しかし、ツール（`@tool`でデコレートしたhandoff用の関数）の実行結果に応じて、次に実行するサブグラフを動的に決定したり、異なるStateの要素を更新する場合、`Command`を利用しなければ実装が非常に複雑になってしまいます。
 :::
 
 <details><summary>Commandを利用する場合</summary>
@@ -877,7 +877,7 @@ for chunk in main_graph.stream(initial, stream_mode="values", subgraphs=True):
 ```
 </details>
 
-`Command`は当時リリースされた直後で、Issueなどにも本事象は報告されておらず、何が原因で想定通りの挙動にならないのかが不明でした。そこで、`Command`について、ドキュメントで仕様を調査し、`add_edge`を利用した場合の実行結果と比較することで、以下の点が不具合の原因であると確認しました。また、以下の点は、サブグラフ特有のバグである点も確認しました。
+`Command`は当時リリースされた直後で、Issueなどにも本事象は報告されておらず、何が原因で想定通りの挙動にならないのかが不明でした。そこで、`Command`について、ドキュメントで仕様を調査し、`add_edge`を利用した場合の実行結果と比較することで、以下の2点が不具合の原因であると確認しました。また、以下の2点は、サブグラフ特有のバグである点も確認しました。
 
 - SupervisorとSub Agent間のStateの連携がなされない
 - streamメソッドの出力に、Sub Agentの最終ノードの情報が含まれない
@@ -891,7 +891,7 @@ https://github.com/langchain-ai/langgraph/issues/3115
 https://github.com/langchain-ai/langgraph/issues/3362
 
 ## まとめ
-本記事では、LangGraphとAmazon Bedrockを利用し、Supervisor型のMulti-Agentシステムで、複数のAgentic WorkflowをSub Agentとして利用する方法を解説しました。また、LangGraphで、Agentic WorkflowをSub Agentとして利用するための機能であるSubGraphと、Agent間で制御を委譲する機能であるhandoffについて解説しました。執筆時点（2025/03/12）において、Multi-Agentの実装事例は少なく、実装方法が不明瞭な部分も多い中で、本記事が参考になれば幸いです。
+本記事では、LangGraphとAmazon Bedrockを利用し、Supervisor型のMulti-Agentシステムで、複数のAgentic WorkflowをSub Agentとして利用する方法を解説しました。また、LangGraphで、Agentic WorkflowをSub Agentとして利用するための機能であるSubGraphと、Agent間で制御を委譲する機能であるhandoff（Command）について解説しました。執筆時点（2025/03/12）において、Multi-Agentの実装事例が少ない中で、本記事が参考になれば幸いです。
 
 本記事の内容は、弊社でのAWS Japan生成AI実用化推進プログラムでの取り組みの一環です。プログラムにおける取り組み内容は、以下のnoteにて外部発信していますのでぜひご覧ください！
 
