@@ -17,7 +17,7 @@ https://speakerdeck.com/ren8k/langgraph-bedrock-supervisor-agent
 
 解説用に実装した簡易アプリケーションのリポジトリは、以下のリンクからご確認いただけます。
 
-https://github.com/yamato0811/streamlit-langgraph-multi-agent.git
+https://github.com/yamato0811/langgraph-bedrock-multi-agent.git
 
 ※ 以前、StreamlitとLangGraphで実装したHuman-in-the-loop Agentic Workflowについて解説した記事を執筆しました。まだご覧になっていない方は、そちらを合わせてお読みいただくとより理解が深まるかと思います！
 
