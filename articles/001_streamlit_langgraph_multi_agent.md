@@ -21,10 +21,6 @@ https://github.com/yamato0811/streamlit-langgraph-multi-agent.git
 
 https://qiita.com/yamato0811/items/02688690a85a670b773f
 
-本内容は、弊社でのAWS Japan生成AI実用化推進プログラムでの取り組みの一環です。プログラムにおける取り組み内容は、以下のnoteにて外部発信していますのでぜひご覧ください！
-
-https://note.com/digitalsuccess/n/n958487f4d1cf
-
 
 ## 想定読者
 - Streamlitを用いたアプリケーション開発経験がある方
@@ -871,8 +867,11 @@ https://github.com/langchain-ai/langgraph/issues/3115
 https://github.com/langchain-ai/langgraph/issues/3362
 
 ## まとめ
-本記事では、LangGraphとAmazon Bedrockを活用し、Agentic WorkflowとSupervisor型Multi-Agentを組み合わせた広告素材生成アプリケーションの実装事例をご紹介しました。
-まだMulti-Agentの実装事例は少なく、実装方法が不明瞭な部分も多い中で、本記事のサンプル実装が何らかの指針として参考になれば幸いです。
+本記事では、LangGraphとAmazon Bedrockを利用し、Supervisor型のMulti-Agentシステムで、複数のAgentic WorkflowをSub Agentとして利用する方法を解説しました。また、LangGraphで、Agentic WorkflowをSub Agentとして利用するための機能であるSubGraphと、Agent間で制御を委譲する機能であるhandoffについて解説しました。執筆時点（2025/03/12）において、Multi-Agentの実装事例は少なく、実装方法が不明瞭な部分も多い中で、本記事が参考になれば幸いです。
+
+本記事の内容は、弊社でのAWS Japan生成AI実用化推進プログラムでの取り組みの一環です。プログラムにおける取り組み内容は、以下のnoteにて外部発信していますのでぜひご覧ください！
+
+https://note.com/digitalsuccess/n/n958487f4d1cf
 
 ## 仲間募集
 NTTデータ テクノロジーコンサルティング事業本部 では、以下の職種を募集しています。
