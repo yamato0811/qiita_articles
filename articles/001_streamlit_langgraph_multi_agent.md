@@ -108,14 +108,14 @@ WorkflowとMulti-Agentの両方のメリットを享受するため、Multi-Agen
 - tool use(`@tool`) + handoff(Command): 実行すべきAgentを選択し、そのAgentへ実行制御と必要情報を引き継ぐ機能
 
 :::note info
-Supervisor型のMulti-Agentを実装する際、ユーザーが入力したプロンプトからSub Agentへ渡すべき情報をどのように抽出し、伝達するかが課題でした。例えば、広告のキャッチコピー文を生成するAgentic Workflow（Sub Agent）の実行において、「どのようなテーマでコピー文を生成するか」という情報が必要です。しかし、ユーザーのプロンプトは必ずしもテーマのみが含まれているわけではなく、以下のようなケースが考えられます。
+Supervisor型のMulti-Agentを実装する際、ユーザーが入力したプロンプトからSub Agentへ渡すべき情報をどのように抽出し、伝達するかが課題でした。例えば、広告のキャッチコピー文を生成するAgentic Workflow（Sub Agent）の実行において、「どのようなテーマでコピー文を生成するか」という情報が必要です。しかし、ユーザーのプロンプトには必ずしもテーマのみが含まれるわけではなく、以下のようなケースが考えられます。
 
 - (1) 広告のテーマ以外にも様々な要望などの情報が含まれるケース
 - (2) ユーザーの入力が不完全で、テーマが含まれないケース
 
-(1)の場合には、テーマのみを抽出する必要があり、(2)の場合には、ユーザーに（Agentic Workflowの実行に必要な）テーマを入力するよう依頼する必要があります。
+(1)の場合には、テーマのみを抽出する必要があり、(2)の場合には、ユーザーに（Sub Agentの実行に必要な）テーマを入力するよう依頼する必要があります。
 
-この課題に対し、LangGraphの機能を調査・検証した結果、@toolデコレータとhandoff(Command)を組み合わせた手法が有効であると考えました。具体的には、@toolデコレータを利用してAgentic Workflowを実行するためのツールを定義します。その際、ツールの引数として、Workflowの最初のノードの実行に必要な情報を設定し、ツールの説明には、Agentic Workflowの説明を詳細に記述します。これにより、ユーザーのプロンプトから必要な情報だけを正確に抽出することが可能となり、ユーザーの入力が不完全な場合には、ユーザーに再入力を促すことができます。
+この課題に対し、LangGraphの機能を調査・検証した結果、@toolデコレータとhandoff(Command)を組み合わせた手法が有効であると考えました。具体的には、@toolデコレータを利用してAgentic Workflow（Sub Agent）を実行するためのツールを定義します。その際、ツールの引数として、Agentic Workflowの最初のノードの実行に必要な情報を設定し、ツールの説明には、Agentic Workflowの説明を記述します。これにより、ユーザーのプロンプトから必要な情報だけを正確に抽出することが可能となり、ユーザーの入力が不完全な場合には、ユーザーに再入力を促すことができます。
 
 ```python
 # handoff用のツールの簡易実装例
@@ -125,14 +125,14 @@ from langgraph.types import Command
 def handoff_to_copy_generator(
     theme_copy: Annotated[str, "コピーのテーマ"] # ツールの引数として、Workflowの実行に必要な情報を設定
     ) -> Command:
-    """subagentの説明"""
+    """Agentic Workflow（Sub Agent）の説明"""
     return Command(
-        goto="copy_generator_subgraph", # Supervisorが次に実行すべきSub Agent
+        goto="copy_generator_subgraph", # Supervisorが次に実行すべきノード（Sub Agent）
         update={"theme_copy": theme_copy}, # Workflowの最初のノードでは、state["theme_copy"]を利用してコピー文を生成する
     )
 ```
 
-また、ツールの返り値としてCommandオブジェクトを返すように設定します。Commandとは、LangGraphのノード内で次に実行するノード（Sub Agent）の指定や、AgentのStateの更新を同時に行う機能です。Commandオブジェクトには、次に実行すべきSub Agentと、Sub Agentの実行に必要な情報（引数）を設定します。これにより、Supervisorがユーザーのプロンプトから抽出した情報（生成された引数）をSub Agentに引き渡し、Sub Agentを実行（handoff）することが可能となります。なお、SupervisorとSub Agentの情報の連携はStateを介して行います。
+また、ツールの返り値としてCommandオブジェクトを返すように設定します。Commandとは、LangGraphのノード内で次に実行するノードの指定や、AgentのStateの更新を同時に行う機能です。Commandオブジェクトには、次に実行すべきSub Agentと、Sub Agentの実行に必要な情報（引数）を設定します。これにより、Supervisorがユーザーのプロンプトから抽出した情報（生成された引数）をSub Agentに引き渡し、Sub Agentを実行（handoff）することが可能となります。なお、SupervisorとSub Agentの情報の連携はStateを介して行います。
 
 以上の仕組みにより、ユーザーのプロンプトから、次に実行すべきSub Agentの決定と、Sub Agentの実行に必要な情報の抽出が可能になります。
 
@@ -236,7 +236,7 @@ Workflowで構成した各Sub Agentを階層的に管理するため、SubGraph�
 すでにコンパイル済みのグラフ（`copy_generator`や`image_generator`）を直接ノードとして`add_node`することで、Agentic Workflowをサブグラフとして利用することができます。
 
 :::note warn
-ツールとして、handoffによりサブエージェントに制御を譲渡するための関数（`handoff_to_copy_generator`や`handoff_to_image_generator`）を定義しています。これら解説については、後述の[セクション](#handoffcommand)で詳しく行います。
+ツールとして、handoffによりSub Agentに制御を委譲する（Sub Agentを実行する）ための関数（`handoff_to_copy_generator`や`handoff_to_image_generator`）を定義しています。これら解説については、後述の[セクション](#handoffcommand)で詳しく行います。
 :::
 
 ```python: agent/supervisor.py
@@ -405,9 +405,9 @@ CopyGeneratorの各ノードの処理関数は以下のように記載してい�
 handoffは、あるAgentが別のAgentに制御を渡す考え方のことで、LangGraphのCommandという機能を利用して実現する事ができます。
 
 #### Supervisorの処理関数の実装
-Supervisorの`supervisor()`関数では、tool useとhandoffを使用して、Supervisor Agentが他のサブエージェントに処理を委譲する（サブエージェントをツールとして呼び出す）仕組みを実装しています。
+Supervisorの`supervisor()`関数では、tool useとhandoffを使用して、Supervisor Agentが他のSub Agentに処理を委譲する（Sub Agentをツールとして呼び出す）仕組みを実装しています。
 
-まず、Supervisorは、過去の会話履歴とユーザーからの指示に基づき、次にどのサブエージェント（ツール）を利用すべきかを判断します。その際、応答（`response`）は会話のコンテキストとして`state["messages"]`に追加しています。
+まず、Supervisorは、過去の会話履歴とユーザーからの指示に基づき、次にどのSub Agent（ツール）を利用すべきかを判断します。その際、応答（`response`）は会話のコンテキストとして`state["messages"]`に追加しています。
 
 ```python: agent/supervisor.py
 def supervisor(self, state: AgentState) -> Command[
@@ -458,7 +458,7 @@ def supervisor(self, state: AgentState) -> Command[
             invoke_result = json.loads(tool_response.content)
 ```
 
-ツール呼び出しの結果から得られた`goto`と`update`を使い、Commandオブジェクトを返します。これにより、処理は次のサブエージェント（`goto`に格納されている`copy_generator_subgraph`や`image_generator_subgraph`）へ移譲されます。
+ツール呼び出しの結果から得られた`goto`と`update`を使い、Commandオブジェクトを返します。これにより、処理は次のSub Agent（`goto`に格納されている`copy_generator_subgraph`や`image_generator_subgraph`）へ移譲されます。
 
 ```python: agent/supervisor.py
         # for bedrock
@@ -509,7 +509,7 @@ https://langchain-ai.github.io/langgraph/how-tos/command/
 #### toolの定義
 Supervisorで利用するtoolは以下のように定義しています。`@tool`でデコレートしたhandoff用の関数（ツール）をSupervisorが呼び出すことで、以下の情報を取得可能です。
 
-- 次に実行すべきサブエージェント（Workflow）のノード名（`copy_generator_subgraph`）
+- 次に実行すべきSub Agent（Workflow）のノード名（`copy_generator_subgraph`）
 - ツールメッセージ（`[tool_msg]`）
 - Workflowの実行に必要なStateの情報（tool useによって生成されたツールの引数 `theme_copy`）
 
