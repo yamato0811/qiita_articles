@@ -1,7 +1,13 @@
 # LangGraph×Bedrockによる複数のAgentic Workflowを利用したSupervisor型マルチエージェントの実装：広告素材作成アプリケーション
 
+
+本記事は、以下 2 名による共著です。
+
+- NTT データ – デジタルサクセスコンサルティング事業部 原 弥麻人
+- NTT データ – デジタルサクセスコンサルティング事業部 鯨田 連也
+
 :::note info
-本記事は[Bedrock Night オンライン 〜AWSで生成AIアプリ開発！ 最新ナレッジ共有〜](https://jawsug.connpass.com/event/345497/)で登壇した際の内容です。以下の登壇資料も合わせてご覧ください！
+本記事は、[Bedrock Night オンライン 〜AWSで生成AIアプリ開発！ 最新ナレッジ共有〜](https://jawsug.connpass.com/event/345497/)で登壇した際の内容です。以下の登壇資料も合わせてご覧ください！
 :::
 
 https://speakerdeck.com/ren8k/langgraph-bedrock-supervisor-agent
